@@ -1,0 +1,301 @@
+// ---------- GENERATOR & DATASOURCE ----------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- MODELS ----------
+model UserRole {
+  id           Int       @id @default(autoincrement())
+  title        String    @unique @db.VarChar(100)
+  slug         String    @unique @db.VarChar(100)
+  description  String?   @db.VarChar(255)
+  type         RoleType  @default(USER)
+  isSuperAdmin Boolean   @default(false)
+  status       Boolean   @default(true)
+  createdAt    DateTime? @db.Timestamp(6)
+  updatedAt    DateTime? @db.Timestamp(6)
+  deletedAt    DateTime? @db.Timestamp(6)
+
+  users User[]
+
+  @@map("user_role")
+}
+
+enum RoleType {
+  ADMIN
+  USER
+}
+
+model UserApiToken {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  api_token     String
+  device_type   String?
+  device_token  String?
+  platform_type String?
+  platform_id   String?
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime? @default(now())
+  updated_at    DateTime? @updatedAt
+  deleted_at    DateTime?
+
+  // Relation to User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model UserAddress {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  addressLine1 String    @db.VarChar(255)
+  addressLine2 String?   @db.VarChar(255)
+  city         String    @db.VarChar(150)
+  state        String?   @db.VarChar(150)
+  country      String    @db.VarChar(150)
+  postalCode   String?   @db.VarChar(50)
+  isDefault    Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime? @db.Timestamp(6)
+
+  // Relation to User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_address")
+}
+
+model User {
+  id                Int         @id @default(autoincrement())
+  userGroupId       Int?
+  createdBy         Int         @default(0)
+  userType          UserType    @default(USER)
+  name              String?     @db.VarChar(255)
+  lname              String?     @db.VarChar(255)
+  username          String      @unique @default("temp_username") @db.VarChar(150)
+  slug              String      @unique @default("temp_slug") @db.VarChar(150)
+  email             String?     @unique @db.VarChar(150)
+  mobileNumber      String?     @unique @db.VarChar(150)
+  dob               String?     @db.VarChar(250)
+  age               Int         @default(0)
+  gender            Gender      @default(MALE)
+  profileType       ProfileType @default(PUBLIC)
+  password          String      @db.VarChar(255)
+  imageUrl          String?     @db.Text
+  status            Boolean     @default(true)
+  isEmailVerify     Boolean     @default(false)
+  emailVerifyAt     DateTime?
+  platformType      String      @default("custom")
+  platformId        String?
+  emailOtp          String?     @db.VarChar(100)
+  emailOtpCreatedAt DateTime?
+  createdAt         DateTime?   @db.Timestamp(6)
+  updatedAt         DateTime?   @db.Timestamp(6)
+  deletedAt         DateTime?   @db.Timestamp(6)
+
+  // ✅ Relation to UserRole
+  userRole UserRole? @relation(fields: [userGroupId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // ✅ Add this new relation 👇
+  apiTokens UserApiToken[]
+  addresses UserAddress[]
+  orders    Order[]
+
+  @@index([name])
+}
+
+model EventCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(150)
+  slug        String    @unique @db.VarChar(150)
+  imageUrl    String?   @db.Text
+  description String?   @db.Text
+  status      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+  events      Event[]
+  faqs        EventCategoryFaq[]
+  galleries   Gallery[]
+  @@index([name])
+  @@map("event_category")
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  categoryId  Int
+  title       String    @db.VarChar(255)
+  slug        String    @unique @db.VarChar(255)
+  description String?   @db.Text
+  imageUrl    String?   @db.Text
+  price       Float?    @default(0)
+  is_manual   Boolean   @default(true)
+  is_face     Boolean   @default(true)
+  status      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+
+  // Relations
+  galleries   Gallery[]
+  category EventCategory        @relation(fields: [categoryId], references: [id])
+}
+
+model EventCategoryFaq {
+  id              Int       @id @default(autoincrement())
+  eventCategoryId Int
+  slug            String?   @unique @db.VarChar(255)
+  question        String    @db.VarChar(500)
+  answer          String    @db.Text
+  status          Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? @db.Timestamp(6)
+
+  // Relation to EventCategory
+  eventCategory EventCategory @relation(fields: [eventCategoryId], references: [id], onDelete: Cascade)
+
+  @@index([eventCategoryId])
+  @@map("event_category_faqs")
+}
+
+model Blog {
+  id            Int       @id @default(autoincrement())
+  title         String    @db.VarChar(255)
+  slug          String    @unique @db.VarChar(255)
+  description   String?   @db.Text
+  imageUrl      String?   @db.Text
+  seoTitle      String?   @db.VarChar(255)
+  seoDescription String?  @db.Text
+  status        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? @db.Timestamp(6)
+
+  @@index([title])
+  @@map("blog")
+}
+
+model Media {
+  id          Int       @id @default(autoincrement())
+  title       String?   @db.VarChar(255)
+  url         String    @db.Text
+  type        MediaType @default(IMAGE)
+  relatedType String?   @db.VarChar(100) // e.g., "Event", "User"
+  relatedId   Int?      // the ID of the related entity
+  status      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+
+  @@index([relatedType, relatedId])
+  @@map("media")
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  stripeSessionId String      @unique
+  total           Decimal     @db.Decimal(10,2)
+  status          OrderStatus @default(PENDING)
+  purchaseDate    DateTime    @default(now())
+
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  itemId    Int
+  itemslug  String
+  title     String
+  price     Decimal  @db.Decimal(10,2)
+  quantity  Int
+
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Gallery {
+  id              Int       @id @default(autoincrement())
+  slug          String    @unique @db.VarChar(255)
+  eventCategoryId Int?
+  eventId         Int?
+  title           String?   @db.VarChar(255)
+  imageUrl        String    @db.Text
+  description     String?   @db.Text
+  galleryPath     String?   @db.VarChar(255)
+  status          Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? @db.Timestamp(6)
+
+  // Relations
+  eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id], onDelete: Cascade)
+  event           Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  items           GalleryItem[]  
+  @@index([eventCategoryId])
+  @@index([eventId])
+  @@map("gallery")
+}
+
+model GalleryItem {
+  id          Int       @id @default(autoincrement())
+  slug          String    @unique @db.VarChar(255)
+  galleryId  Int
+
+  title       String?   @db.VarChar(255)
+  imageUrl    String    @db.Text
+  description String?   @db.Text
+  sortOrder   Int       @default(0)
+  status      Boolean   @default(true)
+
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+
+  // Relation
+  gallery     Gallery   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  @@index([galleryId])
+  @@map("gallery_items")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+// ---------- ENUMS ----------
+enum UserType {
+  ADMIN
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ProfileType {
+  PUBLIC
+  PRIVATE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
