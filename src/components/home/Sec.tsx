@@ -27,7 +27,7 @@ export default function Sec({
                 <div className="py-[20px]">
                     {/* <h3 className="blog-card-title !text-black !mb-[10px] !min-h-auto">{title}</h3> */}
                     <div className="btn btn-primary w-full flex justify-center items-center gap-2 mt-2">
-                        <span>{title}</span>
+                        <span className="whitespace-nowrap">{title}</span>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>

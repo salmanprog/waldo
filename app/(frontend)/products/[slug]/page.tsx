@@ -129,7 +129,7 @@ export default function ProductDescriptionPage({ params }: ProductDescriptionPro
                                                 href="/cart"
                                                 className="w-full btn btn-primary py-3 text-center text-lg font-bold shadow-md hover:shadow-lg transition-all"
                                             >
-                                                Edit to cart
+                                                Added to cart
                                             </Link>
                                         ) : (
                                             <button
