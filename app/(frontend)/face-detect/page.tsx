@@ -8,15 +8,23 @@ type FaceResult = {
   similarity: number
 }
 
+// Simple face silhouette SVGs for three angles (frontal, 3/4, profile)
+const SAMPLE_FRONTAL = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="%236b7280"><ellipse cx="60" cy="75" rx="40" ry="45"/><ellipse cx="45" cy="68" rx="4" ry="5" fill="%239ca3af"/><ellipse cx="75" cy="68" rx="4" ry="5" fill="%239ca3af"/><path d="M50 95 Q60 105 70 95" stroke="%239ca3af" stroke-width="2" fill="none"/></svg>')
+const SAMPLE_THREE_QUARTER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="%236b7280"><path d="M85 75 Q95 75 95 120 Q95 130 55 130 Q25 130 25 95 Q25 70 50 55 Q75 45 90 60 Z"/><ellipse cx="65" cy="68" rx="4" ry="5" fill="%239ca3af"/><path d="M55 92 Q65 98 72 92" stroke="%239ca3af" stroke-width="2" fill="none"/></svg>')
+const SAMPLE_PROFILE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" fill="%236b7280"><path d="M35 55 Q50 45 75 50 Q95 55 95 85 Q95 120 70 130 Q40 130 30 100 Q25 75 35 55 Z"/><ellipse cx="65" cy="70" rx="3" ry="4" fill="%239ca3af"/><path d="M45 95 Q55 98 62 94" stroke="%239ca3af" stroke-width="2" fill="none"/></svg>')
+
 export default function FaceSearch() {
-    const [gallery, setGallery] = useState<string>(
-        'photographs-of-graduations-commissioning-gallery'
-      )
+  const [gallery, setGallery] = useState<string>(
+    'photographs-of-graduations-commissioning-gallery'
+  )
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [results, setResults] = useState<FaceResult[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
+  const [notificationEmail, setNotificationEmail] = useState('')
+  const [notificationPhone, setNotificationPhone] = useState('')
+  const [notifyVia, setNotifyVia] = useState<'email' | 'phone'>('email')
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -50,29 +58,54 @@ export default function FaceSearch() {
         return
       }
 
-      try {
-        const res = await fetch('/api/users/face-search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: base64,
-            gallery,
-          }),
-        })
-
-        const json = await res.json()
-
-        if (!res.ok || json.code !== 200) {
-          throw new Error(json.message || 'Face search failed')
+      // Validate image dimensions (100x100 min, max 1920×1080 per guideline)
+      const img = new window.Image()
+      img.onload = async () => {
+        const w = img.naturalWidth
+        const h = img.naturalHeight
+        if (w < 100 || h < 100) {
+          setError('Image too small. Use at least 100×100 pixels (head and shoulders).')
+          setLoading(false)
+          return
+        }
+        const maxDim = Math.max(w, h)
+        if (maxDim > 1920) {
+          setError('Image too large. Max dimension 1920 pixels (e.g. 1920×1080).')
+          setLoading(false)
+          return
         }
 
-        setResults(json.data?.results ?? [])
-        setSearched(true)
-      } catch (err) {
-        setError((err as Error).message)
-      } finally {
+        try {
+          const res = await fetch('/api/users/face-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: base64,
+              gallery,
+              notificationEmail: notifyVia === 'email' ? notificationEmail : undefined,
+              notificationPhone: notifyVia === 'phone' ? notificationPhone : undefined,
+            }),
+          })
+
+          const json = await res.json()
+
+          if (!res.ok || json.code !== 200) {
+            throw new Error(json.message || 'Face search failed')
+          }
+
+          setResults(json.data?.results ?? [])
+          setSearched(true)
+        } catch (err) {
+          setError((err as Error).message)
+        } finally {
+          setLoading(false)
+        }
+      }
+      img.onerror = () => {
+        setError('Failed to load image')
         setLoading(false)
       }
+      img.src = reader.result as string
     }
 
     reader.onerror = () => {
@@ -102,17 +135,61 @@ export default function FaceSearch() {
       <InnerBanner title="Face Search" bannerClass="products-banner" />
       <section className="py-20">
         <div className="container">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto space-y-8">
+
+            {/* Photo guidelines */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+                Photo Guidelines
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                With a mobile device, we suggest you take three photographs of your grad specifically for the Facial Recognition: frontal view, 3/4 view and profile. Follow these guidelines:
+              </p>
+              <ul className="text-gray-600 dark:text-gray-400 text-sm space-y-2 list-disc list-inside mb-6">
+                <li>Head and shoulders</li>
+                <li>Sharp, no facial obstructions</li>
+                <li>Both eyes open</li>
+                <li>Larger than 100×100 pixels, resolution up to 1920×1080</li>
+                <li>Colored images</li>
+                <li>Flat lighting, no backlighting</li>
+                <li>Neutral expression with no smiles</li>
+              </ul>
+
+              {/* Three sample angles */}
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                Three facial angles:
+              </p>
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="text-center">
+                  <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 aspect-square flex items-center justify-center p-2">
+                    <img src={SAMPLE_FRONTAL} alt="Frontal view" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2 block">Frontal</span>
+                </div>
+                <div className="text-center">
+                  <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 aspect-square flex items-center justify-center p-2">
+                    <img src={SAMPLE_THREE_QUARTER} alt="3/4 view" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2 block">3/4 View</span>
+                </div>
+                <div className="text-center">
+                  <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 aspect-square flex items-center justify-center p-2">
+                    <img src={SAMPLE_PROFILE} alt="Profile view" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2 block">Profile</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Search form */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
                 Search Face in Gallery
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">
-                Upload a photo to find similar faces in our gallery.
-              </p>
 
               <div className="space-y-6">
-                <div>
+
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Select gallery
                   </label>
@@ -132,7 +209,7 @@ export default function FaceSearch() {
                         Graduation / Commissioning
                     </option>
                     </select>
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -221,3 +298,4 @@ export default function FaceSearch() {
     </>
   )
 }
+

@@ -30,10 +30,13 @@ faceapi.env.monkeyPatch({
 // ─────────────────────────────────────────────
 let modelsLoaded = false
 const MODEL_PATH = path.join(process.cwd(), 'models')
+const GALLERY_ROOT = path.join(process.cwd(), 'public', 'uploads', 'gallery')
+const BATCH_SIZE = 6
 
 async function loadModels(): Promise<void> {
   if (modelsLoaded) return
 
+  await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_PATH)
   await faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_PATH)
   await faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_PATH)
   await faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_PATH)
@@ -54,6 +57,81 @@ type FaceSearchResult = {
   similarity: number
 }
 
+// In-memory index cache (no disk read per search)
+const indexCache = new Map<string, { index: FaceIndexEntry[]; mtime: number }>()
+
+// ─────────────────────────────────────────────
+// On-demand index build (no build-face-index.js needed)
+// ─────────────────────────────────────────────
+async function getOrBuildIndex(gallery: string): Promise<FaceIndexEntry[]> {
+  const itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
+  if (!fs.existsSync(itemsDir)) {
+    throw new Error('Gallery not found')
+  }
+
+  const indexPath = path.join(MODEL_PATH, `index-${gallery}.json`)
+  const dirMtime = fs.statSync(itemsDir).mtimeMs
+
+  // Check in-memory cache
+  const cached = indexCache.get(gallery)
+  if (cached && cached.mtime >= dirMtime) {
+    return cached.index
+  }
+
+  // Check disk cache
+  if (fs.existsSync(indexPath)) {
+    try {
+      const stat = fs.statSync(indexPath)
+      if (stat.mtimeMs >= dirMtime) {
+        const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8')) as FaceIndexEntry[]
+        indexCache.set(gallery, { index, mtime: dirMtime })
+        return index
+      }
+    } catch {
+      // Fall through to rebuild
+    }
+  }
+
+  // Build index on-demand (parallel processing for speed)
+  await loadModels()
+  const files = fs.readdirSync(itemsDir).filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f))
+  const index: FaceIndexEntry[] = []
+
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE)
+    const results = await Promise.all(
+      batch.map(async (file) => {
+        const imgPath = path.join(itemsDir, file)
+        try {
+          const img = await canvas.loadImage(imgPath)
+          let detections = await faceapi
+            .detectAllFaces(img as unknown as faceapi.TNetInput, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.2, maxResults: 20 }))
+            .withFaceLandmarks()
+            .withFaceDescriptors()
+          if (detections.length === 0) {
+            detections = await faceapi
+              .detectAllFaces(img as unknown as faceapi.TNetInput, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.2 }))
+              .withFaceLandmarks()
+              .withFaceDescriptors()
+          }
+          return detections.map((d) => ({
+            image: `/uploads/gallery/${gallery}/items/${file}`,
+            desc: Array.from(d.descriptor),
+          }))
+        } catch {
+          return []
+        }
+      })
+    )
+    for (const entries of results) index.push(...entries)
+  }
+
+  indexCache.set(gallery, { index, mtime: dirMtime })
+  fs.mkdirSync(MODEL_PATH, { recursive: true })
+  fs.writeFileSync(indexPath, JSON.stringify(index))
+  return index
+}
+
 // ─────────────────────────────────────────────
 // POST /api/users/face-search
 // ─────────────────────────────────────────────
@@ -66,6 +144,8 @@ export async function POST(request: Request) {
     const imageBase64: string | undefined = body.imageBase64
     const gallery: string | undefined = body.gallery
     const threshold: number = body.threshold ?? 0.6
+    const notificationEmail: string | undefined = body.notificationEmail
+    const notificationPhone: string | undefined = body.notificationPhone
 
     if (!imageBase64 || !gallery) {
       return NextResponse.json(
@@ -82,16 +162,27 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(imageBase64, 'base64')
     const img = await canvas.loadImage(buffer)
 
-    const detection = await faceapi
+    // Try SSD MobileNet first (more accurate), then TinyFaceDetector fallback
+    let detection = await faceapi
       .detectSingleFace(
         img as unknown as faceapi.TNetInput,
-        new faceapi.TinyFaceDetectorOptions({
-          inputSize: 416,
-          scoreThreshold: 0.3,
-        })
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.2 })
       )
       .withFaceLandmarks()
       .withFaceDescriptor()
+
+    if (!detection) {
+      detection = await faceapi
+        .detectSingleFace(
+          img as unknown as faceapi.TNetInput,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 512,
+            scoreThreshold: 0.2,
+          })
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor()
+    }
 
     if (!detection) {
       return NextResponse.json({
@@ -104,24 +195,17 @@ export async function POST(request: Request) {
     const queryDescriptor = detection.descriptor
 
     // ─────────────────────────────
-    // Load FAST index JSON
+    // Get or build index (on-demand, no build-face-index.js needed)
     // ─────────────────────────────
-    const indexPath = path.join(
-      process.cwd(),
-      'models',
-      `index-${gallery}.json`
-    )
-
-    if (!fs.existsSync(indexPath)) {
+    let index: FaceIndexEntry[]
+    try {
+      index = await getOrBuildIndex(gallery)
+    } catch (err) {
       return NextResponse.json(
-        { code: 404, message: 'Face index not found for gallery' },
+        { code: 404, message: (err as Error).message },
         { status: 404 }
       )
     }
-
-    const index: FaceIndexEntry[] = JSON.parse(
-      fs.readFileSync(indexPath, 'utf-8')
-    )
 
     // ─────────────────────────────
     // Compare descriptors (FAST)
@@ -148,10 +232,19 @@ export async function POST(request: Request) {
       `⚡ Face search (${gallery}) in ${Date.now() - startTime}ms`
     )
 
+    // Include notification contact when matches found (for future notification service)
+    const notificationContact =
+      results.length > 0 && (notificationEmail || notificationPhone)
+        ? { email: notificationEmail, phone: notificationPhone }
+        : undefined
+
     return NextResponse.json({
       code: 200,
       message: 'success',
-      data: { results },
+      data: {
+        results,
+        ...(notificationContact && { notificationContact }),
+      },
     })
   } catch (error) {
     console.error('❌ Face search error:', error)

@@ -27,6 +27,13 @@ export default function AddGalleryImages() {
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  // Face index: which image paths are indexed, and indexing progress
+  const [indexedPaths, setIndexedPaths] = useState<Set<string>>(new Set());
+  const [indexing, setIndexing] = useState(false);
+  const [indexProgress, setIndexProgress] = useState(0);
+  const [indexStep, setIndexStep] = useState("");
+  const [fullRebuild, setFullRebuild] = useState(false);
+
   // ================= APIs =================
 
   // upload API
@@ -54,11 +61,31 @@ export default function AddGalleryImages() {
     requiresAuth: true,
   });
 
-  // ================= LOAD GALLERY =================
+  // ================= LOAD GALLERY + INDEXED PATHS =================
   useEffect(() => {
     if (galleryId) {
       fetchGalleryItems();
     }
+  }, [galleryId]);
+
+  const fetchIndexedPaths = async () => {
+    if (!galleryId) return;
+    try {
+      const res = await fetch(
+        `/api/admin/face-index?galleryId=${encodeURIComponent(galleryId)}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` } }
+      );
+      const data = await res.json();
+      if (data?.data?.indexedPaths) {
+        setIndexedPaths(new Set(data.data.indexedPaths));
+      }
+    } catch {
+      setIndexedPaths(new Set());
+    }
+  };
+
+  useEffect(() => {
+    if (galleryId) fetchIndexedPaths();
   }, [galleryId]);
 
   // ================= FILE CHANGE =================
@@ -117,6 +144,73 @@ export default function AddGalleryImages() {
       setErrorMsg(err?.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  // ================= BUILD FACE INDEX =================
+  const runFaceIndex = async () => {
+    if (!galleryId) return setErrorMsg("Gallery ID missing");
+    setErrorMsg("");
+    setIndexing(true);
+    setIndexProgress(0);
+    setIndexStep("Starting…");
+    try {
+      const res = await fetch("/api/admin/face-index", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+        body: JSON.stringify({ galleryId: Number(galleryId), fullRebuild }),
+      });
+      if (!res.ok || !res.body) {
+        setErrorMsg("Failed to start indexing");
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const ev = JSON.parse(line) as { type: string; message?: string; current?: number; total?: number };
+            if (ev.type === "step" && ev.message) setIndexStep(ev.message);
+            if (ev.type === "progress" && ev.total != null && ev.current != null) {
+              const pct = ev.total === 0 ? 100 : Math.round((100 * ev.current) / ev.total);
+              setIndexProgress(Math.min(100, pct));
+              await new Promise((r) => setTimeout(r, 0));
+            }
+            if (ev.type === "done") setIndexProgress(100);
+            if (ev.type === "error" && ev.message) setErrorMsg(ev.message);
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+      setIndexStep("Complete");
+      setIndexProgress(100);
+      await fetchIndexedPaths();
+      fetchGalleryItems();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Indexing failed");
+    } finally {
+      setIndexing(false);
+    }
+  };
+
+  const imagePathFromUrl = (imageUrl: string): string => {
+    try {
+      if (imageUrl.startsWith("/")) return imageUrl;
+      const u = new URL(imageUrl);
+      return u.pathname;
+    } catch {
+      return imageUrl;
     }
   };
 
@@ -225,33 +319,85 @@ export default function AddGalleryImages() {
         </div>
       </form>
 
+      {/* ================= BUILD FACE INDEX ================= */}
+      {galleryId && (
+        <div className="mb-8 p-4 border rounded-lg bg-gray-50">
+          <h3 className="text-lg font-semibold mb-2">Face index</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            After uploading new images, run the index so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index everything.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={fullRebuild}
+                onChange={(e) => setFullRebuild(e.target.checked)}
+                disabled={indexing || uploading}
+              />
+              Full rebuild (re-index all images)
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={runFaceIndex}
+              disabled={indexing || uploading}
+            >
+              {indexing ? "Indexing…" : "Build face index"}
+            </Button>
+          </div>
+          {indexing && (
+            <div className="mt-3">
+              <div className="w-full bg-gray-200 rounded-full overflow-hidden h-4">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out flex-shrink-0"
+                  style={{
+                    width: `${Math.min(100, indexProgress)}%`,
+                    minWidth: indexProgress > 0 ? "2%" : "0%",
+                  }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-1">{indexProgress}% — {indexStep}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ================= EXISTING GALLERY GRID ================= */}
       <h3 className="text-lg font-semibold mb-4">
         Gallery Images
       </h3>
 
       <div className="grid grid-cols-5 gap-4">
-        {visibleImages.map((img: any) => (
-          <div
-            key={img.id}
-            className="relative border rounded overflow-hidden group"
-          >
-            <img
-              src={img.imageUrl}
-              className="w-full h-32 object-cover"
-            />
-
-            {/* ❌ DELETE BUTTON */}
-            <button
-              type="button"
-              onClick={() => deleteImage(img.slug)}
-              className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded
-                         opacity-0 group-hover:opacity-100 transition"
+        {visibleImages.map((img: any) => {
+          const path = imagePathFromUrl(img.imageUrl ?? "");
+          const isIndexed = indexedPaths.has(path);
+          return (
+            <div
+              key={img.id}
+              className="relative border rounded overflow-hidden group"
             >
-              ✕
-            </button>
-          </div>
-        ))}
+              <img
+                src={img.imageUrl}
+                className="w-full h-32 object-cover"
+              />
+              <span
+                className={`absolute bottom-2 left-2 text-xs px-2 py-0.5 rounded ${
+                  isIndexed ? "bg-green-600 text-white" : "bg-gray-500 text-white"
+                }`}
+              >
+                {isIndexed ? "Indexed" : "Not indexed"}
+              </span>
+              <button
+                type="button"
+                onClick={() => deleteImage(img.slug)}
+                className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded
+                           opacity-0 group-hover:opacity-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* LOAD MORE */}
