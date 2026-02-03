@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Run face-api.js and canvas in Node (not bundled) so isNodejs() works for monkeyPatch
+  serverExternalPackages: ["face-api.js", "canvas", "@tensorflow/tfjs-core"],
+
   // 🔥 FIX: increase upload body size limit
   experimental: {
     middlewareClientMaxBodySize: "100mb", // or "100mb"

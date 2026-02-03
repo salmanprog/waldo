@@ -6,6 +6,7 @@ import type { ExtendedGalleryItems } from "@/resources/AdminGalleryItemsResource
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { verifyToken } from "@/utils/jwt";
+import { spawn } from "child_process";
 import path from "path";
 interface DecodedToken {
   id: string;
@@ -58,6 +59,23 @@ export async function POST(request: Request) {
             `${gallery.galleryPath}/items/${fileName}`;
         }
       }
+
+      console.log("Starting face index build…");
+
+      const scriptPath = path.join(
+        process.cwd(),
+        "scripts",
+        "build-face-index.js"
+      );
+
+      console.log("Script path:", scriptPath);
+      
+      spawn(process.execPath, [scriptPath], {
+        cwd: process.cwd(),
+        windowsHide: true,
+        detached: false,     // IMPORTANT for Windows
+        stdio: "inherit",    // TEMP: see logs
+      });
 
       // ensure galleryId is numeric
       data.galleryId = galleryId;

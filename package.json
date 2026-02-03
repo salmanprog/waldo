@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 1200",
     "lint": "next lint",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "download-face-models": "node scripts/download-face-models.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -25,9 +26,13 @@
     "@shadcn/ui": "^0.0.4",
     "@tailwindcss/forms": "^0.5.9",
     "@tailwindcss/postcss": "^4.0.9",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "apexcharts": "^4.3.0",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
+    "canvas": "^3.2.1",
+    "face-api.js": "^0.22.2",
     "flatpickr": "^4.6.13",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",

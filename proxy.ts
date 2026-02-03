@@ -8,6 +8,7 @@ const protectedApiRoutes = [
   { path: "/api/users/orders", methods: ["GET"] },
   { path: "/api/users/gallery", methods: ["GET"] },
   { path: "/api/users/gallery-items", methods: ["GET"] },
+  { path: "/api/users/face-search/search", methods: ["POST"] },
   { path: "/api/admin/profile", methods: ["GET", "PATCH"] },
   { path: "/api/admin/address", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/users", methods: ["POST", "GET", "PATCH", "DELETE"] },
@@ -21,6 +22,7 @@ const protectedApiRoutes = [
   { path: "/api/admin/gallery-items", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/gallery-items/list", methods: ["GET"] },
   { path: "/api/admin/gallery-items/multiple", methods: ["POST"] },
+  
 ];
 
 export async function proxy(req: NextRequest) {
