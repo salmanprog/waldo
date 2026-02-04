@@ -1294,6 +1294,11 @@ li {
   content:"Loading..."
 }
 @keyframes l7 {to{background-position: left}}
+
+@keyframes face-search-progress {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(350%); }
+}
 /* responsive */
 
 @media(max-width: 991px) {

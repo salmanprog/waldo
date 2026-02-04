@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react'
 import InnerBanner from '@/components/common/InnerBanner'
 
+const SEARCH_STEPS = [
+  'Detecting face…',
+  'Analyzing features…',
+  'Searching gallery…',
+  'Matching faces…',
+]
+
 type FaceResult = {
   image: string
   similarity: number
@@ -25,6 +32,7 @@ export default function FaceSearch() {
   const [notificationEmail, setNotificationEmail] = useState('')
   const [notificationPhone, setNotificationPhone] = useState('')
   const [notifyVia, setNotifyVia] = useState<'email' | 'phone'>('email')
+  const [searchStepIndex, setSearchStepIndex] = useState(0)
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -121,6 +129,18 @@ export default function FaceSearch() {
       if (imagePreview) URL.revokeObjectURL(imagePreview)
     }
   }, [imagePreview])
+
+  // Cycle search step message while loading
+  useEffect(() => {
+    if (!loading) {
+      setSearchStepIndex(0)
+      return
+    }
+    const t = setInterval(() => {
+      setSearchStepIndex((i) => (i + 1) % SEARCH_STEPS.length)
+    }, 1400)
+    return () => clearInterval(t)
+  }, [loading])
 
   const handleReset = () => {
     if (imagePreview) URL.revokeObjectURL(imagePreview)
@@ -225,19 +245,32 @@ export default function FaceSearch() {
                 </div>
 
                 {imagePreview && (
-                  <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
+                  <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">
                     <img
                       src={imagePreview}
                       alt="Upload preview"
-                      className="w-full max-h-64 object-contain"
+                      className={`w-full max-h-64 object-contain transition-all duration-300 ${loading ? 'opacity-60 scale-[0.98]' : ''}`}
                     />
+                    {loading && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl px-8 py-6 flex flex-col items-center gap-4 min-w-[240px]">
+                          <div className="relative">
+                            <div className="w-14 h-14 rounded-full border-4 border-gray-200 dark:border-gray-600 border-t-[var(--secondary-theme)] animate-spin" />
+                            <div className="absolute inset-0 w-14 h-14 rounded-full border-4 border-transparent border-r-[var(--secondary-theme)]/50 animate-spin" style={{ animationDuration: '1.2s', animationDirection: 'reverse' }} />
+                          </div>
+                          <p className="text-sm font-semibold text-gray-800 dark:text-white transition-opacity duration-300">
+                            {SEARCH_STEPS[searchStepIndex]}
+                          </p>
+                          <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                            <div
+                              className="h-full w-1/3 bg-[var(--secondary-theme)] rounded-full"
+                              style={{ animation: 'face-search-progress 1.8s ease-in-out infinite' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {loading && (
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    🔍 Searching similar faces…
-                  </p>
                 )}
 
                 {error && (
