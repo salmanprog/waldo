@@ -39,7 +39,7 @@ export default function FaceSearch() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setError('Please select an image file (JPG, PNG, etc.)')
+      setError('Please select an image file (JPG, PNG, or WebP).')
       return
     }
 
@@ -83,12 +83,30 @@ export default function FaceSearch() {
           return
         }
 
+        // Convert WebP (and other formats) to JPEG so the API's Node canvas can decode it
+        let payloadBase64 = base64
+        if (file.type === 'image/webp') {
+          try {
+            const canvas = document.createElement('canvas')
+            canvas.width = w
+            canvas.height = h
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(img, 0, 0)
+              const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.92)
+              payloadBase64 = jpegDataUrl.split(',')[1] ?? base64
+            }
+          } catch {
+            // keep original if conversion fails
+          }
+        }
+
         try {
           const res = await fetch('/api/users/face-search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              imageBase64: base64,
+              imageBase64: payloadBase64,
               gallery,
               notificationEmail: notifyVia === 'email' ? notificationEmail : undefined,
               notificationPhone: notifyVia === 'phone' ? notificationPhone : undefined,
@@ -237,7 +255,7 @@ export default function FaceSearch() {
                   </label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,image/webp"
                     onChange={handleUpload}
                     disabled={loading}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--secondary-theme)] file:text-white hover:file:bg-[var(--secondary-theme)]/90 cursor-pointer disabled:opacity-50"
