@@ -144,6 +144,7 @@ export async function POST(request: Request) {
     const imageBase64: string | undefined = body.imageBase64
     const gallery: string | undefined = body.gallery
     const threshold: number = body.threshold ?? 0.6
+    const minSimilarity: number = body.minSimilarity ?? 0.6
     const notificationEmail: string | undefined = body.notificationEmail
     const notificationPhone: string | undefined = body.notificationPhone
 
@@ -217,11 +218,12 @@ export async function POST(request: Request) {
         queryDescriptor,
         new Float32Array(entry.desc)
       )
+      const similarity = Number((1 - distance).toFixed(3))
 
-      if (distance < threshold) {
+      if (distance < threshold && similarity >= minSimilarity) {
         results.push({
           image: entry.image,
-          similarity: Number((1 - distance).toFixed(3)),
+          similarity,
         })
       }
     }
