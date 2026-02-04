@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { useParams, useRouter } from "next/navigation";
 import useApi from "@/utils/useApi";
@@ -33,6 +33,8 @@ export default function AddGalleryImages() {
   const [indexProgress, setIndexProgress] = useState(0);
   const [indexStep, setIndexStep] = useState("");
   const [fullRebuild, setFullRebuild] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ================= APIs =================
 
@@ -104,6 +106,26 @@ export default function AddGalleryImages() {
     setImages((prev) => [...prev, ...selected]);
     e.target.value = "";
   };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (uploading) return;
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    if (files.length + images.length > MAX_IMAGES) {
+      setErrorMsg(`Maximum ${MAX_IMAGES} images allowed.`);
+      return;
+    }
+    setErrorMsg("");
+    setImages((prev) => [...prev, ...files]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
 
   // ================= REMOVE PREVIEW =================
   const removePreviewImage = (index: number) => {
@@ -260,16 +282,40 @@ export default function AddGalleryImages() {
       {/* ================= UPLOAD FORM ================= */}
       <form onSubmit={uploadImages} className="space-y-5 mb-10">
         <input
+          ref={fileInputRef}
           type="file"
           multiple
           accept="image/*"
           onChange={handleFiles}
           disabled={uploading}
+          className="sr-only"
+          aria-label="Choose images to upload"
         />
-
-        <p className="text-xs text-gray-500">
-          Maximum {MAX_IMAGES} images per upload
-        </p>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          disabled={uploading}
+          className={`w-full min-h-[120px] flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors disabled:opacity-50 disabled:pointer-events-none ${
+            dragOver
+              ? "border-blue-500 bg-blue-50/50"
+              : "border-gray-300 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/30"
+          }`}
+        >
+          <span className="text-gray-500">
+            <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </span>
+          <span className="text-sm font-medium text-gray-600">
+            Choose images or drag and drop
+          </span>
+          <span className="text-xs text-gray-500">
+            Maximum {MAX_IMAGES} images per upload · JPG, PNG, WebP
+          </span>
+        </button>
 
         {/* PREVIEW GRID */}
         {images.length > 0 && (
