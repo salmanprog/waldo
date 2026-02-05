@@ -267,9 +267,8 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
-    console.error('❌ Face search error:', error)
     return NextResponse.json(
-      { code: 500, message: 'Internal Server Error' },
+      { code: 500, message: (error as Error).message },
       { status: 500 }
     )
   }
