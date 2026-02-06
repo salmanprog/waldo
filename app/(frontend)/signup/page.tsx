@@ -30,6 +30,7 @@ export default function SignUpPage() {
     lname: "",
     email: "",
     mobileNumber: "",
+    platoon: "",
     password: "",
     confirmPassword: "",
   });
@@ -85,6 +86,7 @@ export default function SignUpPage() {
     }
 
     if (!form.mobileNumber.trim()) newErrors.mobileNumber = "Phone is required";
+    if (!form.platoon.trim()) newErrors.platoon = "Platoon is required";
 
     if (!form.password) newErrors.password = "Password is required";
     if (form.password.length < 6)
@@ -113,6 +115,7 @@ export default function SignUpPage() {
       fd.append("email", form.email);
       fd.append("lname", form.lname);
       fd.append("mobileNumber", form.mobileNumber);
+      fd.append("platoon", form.platoon);
       fd.append("password", form.password);
 
       const res = await sendData<ApiResponse<SignupResponse>>(fd, undefined, "POST");
@@ -202,6 +205,16 @@ export default function SignUpPage() {
                   hint={errors.mobileNumber}
                 />
 
+                <Input
+                  name="platoon"
+                  type="text"
+                  placeholder="Platoon"
+                  value={form.platoon}
+                  onChange={handleChange}
+                  error={!!errors.platoon}
+                  hint={errors.platoon}
+                />
+
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -216,7 +229,6 @@ export default function SignUpPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
                   >
-                    👁️
                   </span>
                 </div>
 
@@ -234,7 +246,6 @@ export default function SignUpPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
                   >
-                    👁️
                   </span>
                 </div>
 
@@ -340,3 +351,4 @@ export default function SignUpPage() {
     </>
   );
 }
+//http://dev-dynamicpricing-env.eba-tkbnkmbm.us-east-1.elasticbeanstalk.com/Pricing/GetAllProductPrice?authcode=d063d05b-fbb1-4bf0-b4d8-b2f603454858&date=2025-10-15

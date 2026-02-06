@@ -26,6 +26,7 @@ export default function AddGalleryImages() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [platoonNumber, setPlatoonNumber] = useState("");
 
   // Face index: which image paths are indexed, and indexing progress
   const [indexedPaths, setIndexedPaths] = useState<Set<string>>(new Set());
@@ -56,6 +57,14 @@ export default function AddGalleryImages() {
     requiresAuth: true,
   });
 
+  // gallery platoons for this gallery
+  const { data: platoonList, fetchApi: fetchPlatoons } = useApi({
+    url: galleryId ? `/api/admin/gallery-platoon?galleryId=${galleryId}` : "",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
   // delete API (same pattern)
   const { sendData: deleteItem } = useApi({
     url: "/api/admin/gallery-items",
@@ -67,6 +76,7 @@ export default function AddGalleryImages() {
   useEffect(() => {
     if (galleryId) {
       fetchGalleryItems();
+      fetchPlatoons();
     }
   }, [galleryId]);
 
@@ -142,6 +152,7 @@ export default function AddGalleryImages() {
 
     const formData = new FormData();
     formData.append("galleryId", galleryId);
+    if (platoonNumber) formData.append("platoonNumber", platoonNumber);
 
     images.forEach((file) => {
       formData.append("images[]", file);
@@ -281,6 +292,26 @@ export default function AddGalleryImages() {
 
       {/* ================= UPLOAD FORM ================= */}
       <form onSubmit={uploadImages} className="space-y-5 mb-10">
+        {/* Platoon Number dropdown - platoons for this gallery */}
+        {/* {galleryId && (
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Platoon Number</label>
+            <select
+              value={platoonNumber}
+              onChange={(e) => setPlatoonNumber(e.target.value)}
+              className="h-11 w-full rounded-lg border px-4 max-w-xs"
+              disabled={uploading}
+            >
+              <option value="">-- Select Platoon (optional) --</option>
+              {(platoonList ?? []).map((p: { id: number; platoonNumber: number }) => (
+                <option key={p.id} value={p.platoonNumber}>
+                  Platoon {p.platoonNumber}
+                </option>
+              ))}
+            </select>
+          </div>
+        )} */}
+
         <input
           ref={fileInputRef}
           type="file"

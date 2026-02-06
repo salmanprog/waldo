@@ -3,7 +3,7 @@ import BaseResource from "@/resources/BaseResource";
 // Extend Blog type to include relations
 export type ExtendedGallery = {
   id?: number;
-
+  is_face_recognition?: boolean;
   eventCategoryId?: number | null;
   eventId?: number | null;
 
@@ -49,7 +49,7 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
       title: gallery.title,
       slug: gallery.slug,
       description: gallery.description,
-
+      is_face_recognition: gallery.is_face_recognition,
       imageUrl: gallery.imageUrl
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${gallery.imageUrl}`
         : null,

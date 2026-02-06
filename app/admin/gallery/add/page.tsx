@@ -19,6 +19,7 @@ export default function AddGallery() {
   const [status, setStatus] = useState("1");
   const [image, setImage] = useState<File | null>(null);
   const [description, setDescription] = useState("");
+  const [is_face_recognition, setIs_face_recognition] = useState<"1" | "0">("0");
   const [errorMsg, setErrorMsg] = useState("");
   const [eventCategorySlug, setEventCategorySlug] = useState("");
 
@@ -62,6 +63,7 @@ export default function AddGallery() {
 
     if (!title) return setErrorMsg("Gallery title is required.");
     if (!eventCategoryId) return setErrorMsg("Please select an event category.");
+    if (!image) return setErrorMsg("Gallery cover image is required.");
 
     try {
       const formData = new FormData();
@@ -69,8 +71,9 @@ export default function AddGallery() {
       formData.append("eventCategoryId", eventCategoryId);
       if (eventId) formData.append("eventId", eventId);
       formData.append("description", description);
+      formData.append("is_face_recognition", is_face_recognition);
       formData.append("status", status);
-      if (image) formData.append("image", image);
+      formData.append("image", image);
 
       const res = await sendData(formData, undefined, "POST");
 
@@ -168,9 +171,40 @@ export default function AddGallery() {
             />
           </div>
 
+          {/* is_face_recognition */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Face Recognition</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="is_face_recognition"
+                  value="1"
+                  checked={is_face_recognition === "1"}
+                  onChange={() => setIs_face_recognition("1")}
+                  className="w-4 h-4"
+                />
+                <span>Yes</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="is_face_recognition"
+                  value="0"
+                  checked={is_face_recognition === "0"}
+                  onChange={() => setIs_face_recognition("0")}
+                  className="w-4 h-4"
+                />
+                <span>No</span>
+              </label>
+            </div>
+          </div>
+
           {/* Gallery Image */}
           <div>
-            <label className="block text-sm font-medium">Gallery Cover Image</label>
+            <label className="block text-sm font-medium">
+              Gallery Cover Image <span className="text-red-500">*</span>
+            </label>
             <label className="border-2 border-dashed p-6 rounded-lg block text-center cursor-pointer">
               <input
                 type="file"

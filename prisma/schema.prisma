@@ -87,6 +87,7 @@ model User {
   profileType       ProfileType @default(PUBLIC)
   password          String      @db.VarChar(255)
   imageUrl          String?     @db.Text
+  platoon           String?     @db.VarChar(250)
   status            Boolean     @default(true)
   isEmailVerify     Boolean     @default(false)
   emailVerifyAt     DateTime?
@@ -235,6 +236,7 @@ model Gallery {
   imageUrl        String    @db.Text
   description     String?   @db.Text
   galleryPath     String?   @db.VarChar(255)
+  is_face_recognition Boolean   @default(false)
   status          Boolean   @default(true)
   createdAt       DateTime  @default(now()) @db.Timestamp(6)
   updatedAt       DateTime  @updatedAt
@@ -243,10 +245,23 @@ model Gallery {
   // Relations
   eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id], onDelete: Cascade)
   event           Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  items           GalleryItem[]  
+  items           GalleryItem[]
+  platoons        GalleryPlatoon[]
   @@index([eventCategoryId])
   @@index([eventId])
   @@map("gallery")
+}
+
+model GalleryPlatoon {
+  id             Int   @id @default(autoincrement())
+  galleryId      Int
+  platoonNumber  Int
+
+  // Relation
+  gallery        Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  @@index([galleryId])
+  @@map("gallery_platoon")
 }
 
 model GalleryItem {

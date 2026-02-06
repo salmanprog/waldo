@@ -62,6 +62,9 @@ export default class AdminGalleryController extends RestController<
     if (this.data?.eventId !== undefined && this.data?.eventId !== null) {
       this.data.eventId = Number(this.data.eventId);
     }
+    if (this.data?.is_face_recognition !== undefined && this.data?.is_face_recognition !== null) {
+      this.data.is_face_recognition = String(this.data.is_face_recognition) === "1";
+    }
   }
 
   protected async afterStore(record: ExtendedGallery): Promise<ExtendedGallery> {
@@ -78,6 +81,9 @@ export default class AdminGalleryController extends RestController<
   
     if (this.data?.eventId !== undefined && this.data?.eventId !== null) {
       this.data.eventId = Number(this.data.eventId);
+    }
+    if (this.data?.is_face_recognition !== undefined && this.data?.is_face_recognition !== null) {
+      this.data.is_face_recognition = String(this.data.is_face_recognition) === "1";
     }
   }
 

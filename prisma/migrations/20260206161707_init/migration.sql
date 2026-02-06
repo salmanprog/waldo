@@ -71,6 +71,7 @@ CREATE TABLE `User` (
     `profileType` ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PUBLIC',
     `password` VARCHAR(255) NOT NULL,
     `imageUrl` TEXT NULL,
+    `platoon` VARCHAR(250) NULL,
     `status` BOOLEAN NOT NULL DEFAULT true,
     `isEmailVerify` BOOLEAN NOT NULL DEFAULT false,
     `emailVerifyAt` DATETIME(3) NULL,
@@ -219,6 +220,7 @@ CREATE TABLE `gallery` (
     `imageUrl` TEXT NOT NULL,
     `description` TEXT NULL,
     `galleryPath` VARCHAR(255) NULL,
+    `is_face_recognition` BOOLEAN NOT NULL DEFAULT false,
     `status` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -227,6 +229,16 @@ CREATE TABLE `gallery` (
     UNIQUE INDEX `gallery_slug_key`(`slug`),
     INDEX `gallery_eventCategoryId_idx`(`eventCategoryId`),
     INDEX `gallery_eventId_idx`(`eventId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `gallery_platoon` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `galleryId` INTEGER NOT NULL,
+    `platoonNumber` INTEGER NOT NULL,
+
+    INDEX `gallery_platoon_galleryId_idx`(`galleryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -275,6 +287,9 @@ ALTER TABLE `gallery` ADD CONSTRAINT `gallery_eventCategoryId_fkey` FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE `gallery` ADD CONSTRAINT `gallery_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `gallery_platoon` ADD CONSTRAINT `gallery_platoon_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `gallery_items` ADD CONSTRAINT `gallery_items_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

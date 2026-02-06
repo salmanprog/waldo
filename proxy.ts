@@ -19,6 +19,7 @@ const protectedApiRoutes = [
   { path: "/api/admin/blog", methods: ["POST", "PATCH", "DELETE"] },
   { path: "/api/admin/events", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/gallery", methods: ["POST", "GET", "PATCH", "DELETE"] },
+  { path: "/api/admin/gallery-platoon", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/gallery-items", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/gallery-items/list", methods: ["GET"] },
   { path: "/api/admin/gallery-items/multiple", methods: ["POST"] },
