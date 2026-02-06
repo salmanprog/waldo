@@ -47,7 +47,7 @@ const initialUploads: Record<Angle, UploadSlot> = {
 
 export default function FaceSearch() {
   const [gallery] = useState<string>(
-    'photographs-of-graduations-commissioning-gallery'
+    'platoon-event'
   )
   const [uploads, setUploads] = useState<Record<Angle, UploadSlot>>(initialUploads)
   const [results, setResults] = useState<FaceResult[]>([])
