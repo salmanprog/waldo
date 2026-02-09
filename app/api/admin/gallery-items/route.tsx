@@ -31,6 +31,13 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
+
+      const rawPlatoonNumber = formData.get("platoonNumber");
+      const platoonNumber = rawPlatoonNumber != null && String(rawPlatoonNumber).trim() !== ""
+        ? String(rawPlatoonNumber).trim()
+        : null;
+      // Platoon folder is outside items: galleryPath/platoon-1/ (not galleryPath/items/platoon-1/)
+      const uploadSubdir = platoonNumber ? `platoon-${platoonNumber}` : "items";
       
       const relativePath = gallery.galleryPath.replace(/^\/uploads\//, "");
       const uploadDir = path.join(
@@ -38,10 +45,12 @@ export async function POST(request: Request) {
         "public",
         "uploads",
         relativePath,
-        "items"
+        uploadSubdir
       );
 
       await fs.mkdir(uploadDir, { recursive: true });
+      const imageUrlPrefix = `${gallery.galleryPath}/${uploadSubdir}`;
+
       for (const [key, value] of formData.entries()) {
         if (typeof value === "string") {
           (data as Record<string, any>)[key] = value;
@@ -55,7 +64,7 @@ export async function POST(request: Request) {
 
           await fs.writeFile(filePath, buffer);
           (data as Record<string, any>).imageUrl =
-            `${gallery.galleryPath}/items/${fileName}`;
+            `${imageUrlPrefix}/${fileName}`;
         }
       }
 

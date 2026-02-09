@@ -40,6 +40,7 @@ export async function POST(req: Request) {
   // Only handle checkout session completed
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+    console.log("session------------------------------", session);
     try {
       const userId = Number(session.metadata?.userId);
       const cart = JSON.parse(session.metadata?.cart || "[]");
@@ -48,9 +49,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { platoon: true },
+      });
+      const platoonNumber = user?.platoon;
       await prisma.order.create({
         data: {
           userId,
+          platoonNumber: Number(platoonNumber),
           stripeSessionId: session.id,
           total: Number(session.amount_total ?? 0) / 100,
           status: "PAID",

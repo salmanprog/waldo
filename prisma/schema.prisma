@@ -201,6 +201,7 @@ model Media {
 model Order {
   id              Int         @id @default(autoincrement())
   userId          Int
+  platoonNumber          Int
   stripeSessionId String      @unique
   total           Decimal     @db.Decimal(10,2)
   status          OrderStatus @default(PENDING)
@@ -268,7 +269,7 @@ model GalleryItem {
   id          Int       @id @default(autoincrement())
   slug          String    @unique @db.VarChar(255)
   galleryId  Int
-
+  platoonNumber  Int
   title       String?   @db.VarChar(255)
   imageUrl    String    @db.Text
   description String?   @db.Text

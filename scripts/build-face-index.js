@@ -30,6 +30,14 @@ function getGalleryFilter() {
   return arg.replace('--gallery=', '').trim() || null
 }
 
+// Parse --platoon=N from argv (optional: index only this platoon folder, e.g. platoon-1)
+function getPlatoonFilter() {
+  const arg = process.argv.find(a => a.startsWith('--platoon='))
+  if (!arg) return null
+  const v = arg.replace('--platoon=', '').trim()
+  return v === '' ? null : v
+}
+
 // Full rebuild: ignore existing index and re-index all images (default: incremental)
 // Set via env FACE_INDEX_FULL=1 (API) or CLI --full
 function isFullRebuild() {
@@ -116,11 +124,14 @@ async function runWithConcurrency(items, limit, fn) {
 
 async function buildIndex() {
   const galleryFilter = getGalleryFilter()
+  const platoonFilter = getPlatoonFilter()
   const fullRebuild = isFullRebuild()
 
+  const subdir = platoonFilter ? `platoon-${platoonFilter}` : 'items'
+
   const allGalleries = fs.readdirSync(GALLERY_ROOT).filter(g => {
-    const itemsDir = path.join(GALLERY_ROOT, g, 'items')
-    if (!fs.existsSync(itemsDir)) return false
+    const dir = path.join(GALLERY_ROOT, g, subdir)
+    if (!fs.existsSync(dir)) return false
     if (galleryFilter && g !== galleryFilter) return false
     return true
   })
@@ -135,10 +146,12 @@ async function buildIndex() {
   let globalCurrent = 0
   let globalTotal = 0
 
+  const basePathPrefix = `/uploads/gallery/`
+
   // Precompute total so progress % is correct from the start
   for (const gallery of allGalleries) {
-    const itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
-    const allFiles = fs.readdirSync(itemsDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
+    const scanDir = path.join(GALLERY_ROOT, gallery, subdir)
+    const allFiles = fs.readdirSync(scanDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
     const indexPath = path.join(MODEL_PATH, `index-${gallery}.json`)
     let indexedPaths = new Set()
     if (!fullRebuild && fs.existsSync(indexPath)) {
@@ -147,14 +160,14 @@ async function buildIndex() {
         if (Array.isArray(existing)) existing.forEach(e => e && e.image && indexedPaths.add(e.image))
       } catch {}
     }
-    const basePath = `/uploads/gallery/${gallery}/items/`
+    const basePath = `${basePathPrefix}${gallery}/${subdir}/`
     const toProcess = fullRebuild ? allFiles : allFiles.filter(f => !indexedPaths.has(basePath + f))
     globalTotal += toProcess.length
   }
 
   for (const gallery of allGalleries) {
-    const itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
-    const allFiles = fs.readdirSync(itemsDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
+    const scanDir = path.join(GALLERY_ROOT, gallery, subdir)
+    const allFiles = fs.readdirSync(scanDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
 
     const indexPath = path.join(MODEL_PATH, `index-${gallery}.json`)
     let existingIndex = []
@@ -172,10 +185,18 @@ async function buildIndex() {
       }
     }
 
-    const basePath = `/uploads/gallery/${gallery}/items/`
-    const filesToProcess = fullRebuild
+    const basePath = `${basePathPrefix}${gallery}/${subdir}/`
+    let filesToProcess = fullRebuild
       ? allFiles
       : allFiles.filter(f => !indexedPaths.has(basePath + f))
+
+    // When indexing a platoon, remove from existing index any entries from this platoon path so we replace them
+    if (platoonFilter && existingIndex.length > 0) {
+      const platoonPath = `${basePathPrefix}${gallery}/${subdir}/`
+      existingIndex = existingIndex.filter(e => e && e.image && !e.image.startsWith(platoonPath))
+      indexedPaths = new Set(existingIndex.map(e => e && e.image).filter(Boolean))
+      filesToProcess = allFiles
+    }
 
     emit('step', {
       message: fullRebuild
@@ -197,7 +218,7 @@ async function buildIndex() {
     let processed = 0
 
     const results = await runWithConcurrency(filesToProcess, CONCURRENCY, async (file) => {
-      const imgPath = path.join(itemsDir, file)
+      const imgPath = path.join(scanDir, file)
       const imagePath = basePath + file
       let entries = []
       try {

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { getHookUser } from "@/utils/hookUser";
+import { prisma } from "@/lib/prisma";
 
 export default class AdminGalleryHook {
 
@@ -38,13 +39,27 @@ export default class AdminGalleryHook {
         },
       },
     };
-    if (request?.query && typeof request.query === 'object' && 'eventId' in request.query) {
-      const eventId = request.query.eventId;
-      if (eventId) {
-        query.where = { 
-          ...query.where, 
-          eventId: typeof eventId === 'string' ? parseInt(eventId, 10) : Number(eventId)
-        };
+    const q = request?.query && typeof request.query === "object" ? request.query : {};
+    if ("eventId" in q && q.eventId) {
+      const eventId = typeof q.eventId === "string" ? parseInt(q.eventId, 10) : Number(q.eventId);
+      if (!isNaN(eventId)) {
+        query.where = { ...query.where, eventId };
+      }
+    }
+    // Filter by platoonNumber from purchased order (for /purchase/[orderId]/gallery)
+    if ("orderId" in q && q.orderId && user?.id) {
+      const orderId = typeof q.orderId === "string" ? parseInt(q.orderId, 10) : Number(q.orderId);
+      if (!isNaN(orderId)) {
+        const order = await prisma.order.findFirst({
+          where: { id: orderId, userId: Number(user.id), status: "PAID" },
+          select: { platoonNumber: true },
+        });
+        if (order != null) {
+          query.where = {
+            ...query.where,
+            platoons: { some: { platoonNumber: order.platoonNumber } },
+          };
+        }
       }
     }
     query.orderBy = {

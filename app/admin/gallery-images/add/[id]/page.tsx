@@ -148,11 +148,12 @@ export default function AddGalleryImages() {
     setErrorMsg("");
 
     if (!galleryId) return setErrorMsg("Gallery ID missing");
+    if (!platoonNumber) return setErrorMsg("Please select a platoon number.");
     if (!images.length) return setErrorMsg("Select at least one image");
 
     const formData = new FormData();
     formData.append("galleryId", galleryId);
-    if (platoonNumber) formData.append("platoonNumber", platoonNumber);
+    formData.append("platoonNumber", platoonNumber);
 
     images.forEach((file) => {
       formData.append("images[]", file);
@@ -183,6 +184,7 @@ export default function AddGalleryImages() {
   // ================= BUILD FACE INDEX =================
   const runFaceIndex = async () => {
     if (!galleryId) return setErrorMsg("Gallery ID missing");
+    if (!platoonNumber) return setErrorMsg("Please select a platoon to build face index.");
     setErrorMsg("");
     setIndexing(true);
     setIndexProgress(0);
@@ -194,7 +196,11 @@ export default function AddGalleryImages() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
-        body: JSON.stringify({ galleryId: Number(galleryId), fullRebuild }),
+        body: JSON.stringify({
+          galleryId: Number(galleryId),
+          platoonNumber: platoonNumber,
+          fullRebuild,
+        }),
       });
       if (!res.ok || !res.body) {
         setErrorMsg("Failed to start indexing");
@@ -273,9 +279,18 @@ export default function AddGalleryImages() {
   };
 
   // ================= PAGINATION =================
-  const allImages = Array.isArray(galleryItems) ? galleryItems : [];
+  // When platoon selected, filter images by platoonNumber; otherwise show all
+  const rawItems = Array.isArray(galleryItems) ? galleryItems : [];
+  const allImages = platoonNumber
+    ? rawItems.filter((img: any) => Number(img.platoonNumber) === Number(platoonNumber))
+    : rawItems;
   const visibleImages = allImages.slice(0, visibleCount);
   const hasMore = visibleCount < allImages.length;
+
+  // Reset visible count when platoon selection changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [platoonNumber]);
 
   // ================= UI =================
   return (
@@ -293,24 +308,27 @@ export default function AddGalleryImages() {
       {/* ================= UPLOAD FORM ================= */}
       <form onSubmit={uploadImages} className="space-y-5 mb-10">
         {/* Platoon Number dropdown - platoons for this gallery */}
-        {/* {galleryId && (
+        {galleryId && (
           <div>
-            <label className="block text-sm font-medium mb-1.5">Platoon Number</label>
+            <label className="block text-sm font-medium mb-1.5">
+              Platoon Number <span className="text-red-500">*</span>
+            </label>
             <select
               value={platoonNumber}
               onChange={(e) => setPlatoonNumber(e.target.value)}
               className="h-11 w-full rounded-lg border px-4 max-w-xs"
               disabled={uploading}
+              required
             >
-              <option value="">-- Select Platoon (optional) --</option>
+              <option value="">-- Select Platoon --</option>
               {(platoonList ?? []).map((p: { id: number; platoonNumber: number }) => (
                 <option key={p.id} value={p.platoonNumber}>
-                  Platoon {p.platoonNumber}
+                  Platoon - {p.platoonNumber}
                 </option>
               ))}
             </select>
           </div>
-        )} */}
+        )}
 
         <input
           ref={fileInputRef}
@@ -397,11 +415,11 @@ export default function AddGalleryImages() {
       </form>
 
       {/* ================= BUILD FACE INDEX ================= */}
-      {galleryId && (
+      {galleryId && platoonNumber && (
         <div className="mb-8 p-4 border rounded-lg bg-gray-50">
-          <h3 className="text-lg font-semibold mb-2">Face index</h3>
+          <h3 className="text-lg font-semibold mb-2">Face index (Platoon {platoonNumber})</h3>
           <p className="text-sm text-gray-600 mb-3">
-            After uploading new images, run the index so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index everything.
+            Index faces in this platoon&apos;s directory so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index all images in this platoon.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
@@ -411,7 +429,7 @@ export default function AddGalleryImages() {
                 onChange={(e) => setFullRebuild(e.target.checked)}
                 disabled={indexing || uploading}
               />
-              Full rebuild (re-index all images)
+              Full rebuild (re-index all images in this platoon)
             </label>
             <Button
               type="button"
@@ -442,43 +460,58 @@ export default function AddGalleryImages() {
       {/* ================= EXISTING GALLERY GRID ================= */}
       <h3 className="text-lg font-semibold mb-4">
         Gallery Images
+        {platoonNumber && (
+          <span className="text-sm font-normal text-gray-500 ml-2">
+            (Platoon {platoonNumber})
+          </span>
+        )}
       </h3>
 
-      <div className="grid grid-cols-5 gap-4">
-        {visibleImages.map((img: any) => {
-          const path = imagePathFromUrl(img.imageUrl ?? "");
-          const isIndexed = indexedPaths.has(path);
-          return (
-            <div
-              key={img.id}
-              className="relative border rounded overflow-hidden group"
-            >
-              <img
-                src={img.imageUrl}
-                className="w-full h-32 object-cover"
-              />
-              <span
-                className={`absolute bottom-2 left-2 text-xs px-2 py-0.5 rounded ${
-                  isIndexed ? "bg-green-600 text-white" : "bg-gray-500 text-white"
-                }`}
+      {!platoonNumber ? (
+        <p className="text-gray-500 py-8 text-center rounded-lg border border-dashed border-gray-300">
+          Select a platoon to view images
+        </p>
+      ) : visibleImages.length === 0 ? (
+        <p className="text-gray-500 py-8 text-center rounded-lg border border-dashed border-gray-300">
+          No images found
+        </p>
+      ) : (
+        <div className="grid grid-cols-5 gap-4">
+          {visibleImages.map((img: any) => {
+            const path = imagePathFromUrl(img.imageUrl ?? "");
+            const isIndexed = indexedPaths.has(path);
+            return (
+              <div
+                key={img.id}
+                className="relative border rounded overflow-hidden group"
               >
-                {isIndexed ? "Indexed" : "Not indexed"}
-              </span>
-              <button
-                type="button"
-                onClick={() => deleteImage(img.slug)}
-                className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded
-                           opacity-0 group-hover:opacity-100 transition"
-              >
-                ✕
-              </button>
-            </div>
-          );
-        })}
-      </div>
+                <img
+                  src={img.imageUrl}
+                  className="w-full h-32 object-cover"
+                />
+                <span
+                  className={`absolute bottom-2 left-2 text-xs px-2 py-0.5 rounded ${
+                    isIndexed ? "bg-green-600 text-white" : "bg-gray-500 text-white"
+                  }`}
+                >
+                  {isIndexed ? "Indexed" : "Not indexed"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => deleteImage(img.slug)}
+                  className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded
+                             opacity-0 group-hover:opacity-100 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* LOAD MORE */}
-      {hasMore && (
+      {platoonNumber && hasMore && (
         <div className="flex justify-center mt-6">
           <Button onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
             Load More

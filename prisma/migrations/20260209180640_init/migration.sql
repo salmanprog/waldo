@@ -185,6 +185,7 @@ CREATE TABLE `media` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `platoonNumber` INTEGER NOT NULL,
     `stripeSessionId` VARCHAR(191) NOT NULL,
     `total` DECIMAL(10, 2) NOT NULL,
     `status` ENUM('PENDING', 'PAID', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
@@ -247,6 +248,7 @@ CREATE TABLE `gallery_items` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `slug` VARCHAR(255) NOT NULL,
     `galleryId` INTEGER NOT NULL,
+    `platoonNumber` INTEGER NOT NULL,
     `title` VARCHAR(255) NULL,
     `imageUrl` TEXT NOT NULL,
     `description` TEXT NULL,

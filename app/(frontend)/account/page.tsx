@@ -650,11 +650,15 @@ export default function AccountPage() {
                               </td>
 
                               <td className="py-6 text-right">
-                                <Link href={`/purchase/${order.items[0].productId}/gallery`}>
-                                  <Button variant="outline" size="sm">
-                                    View Event Galleries
-                                  </Button>
-                                </Link>
+                                {order.items?.[0]?.productId ? (
+                                  <Link href={`/purchase/${order.id}/gallery?eventId=${order.items[0].productId}`}>
+                                    <Button variant="outline" size="sm">
+                                      View Event Galleries
+                                    </Button>
+                                  </Link>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                )}
                               </td>
                             </tr>
                           ))}

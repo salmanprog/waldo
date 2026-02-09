@@ -15,6 +15,7 @@ export default class UserOrderResource extends BaseResource<ExtendedOrder> {
     return {
       id: order.id,
       userId: order.userId,
+      platoonNumber: order.platoonNumber,
       purchase_date: new Date(order.purchaseDate).toISOString().split("T")[0],
       total: order.total,
       status: order.status,

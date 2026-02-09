@@ -65,6 +65,9 @@ export default class UserOrderController extends RestController<
     if (!currentUser) {
       return this.sendError("Unauthorized", { auth: "User not logged in" }, 401);
     }
+    if (this.data && this.data.platoonNumber !== undefined && this.data.platoonNumber !== null) {
+      this.data.platoonNumber = Number(this.data.platoonNumber);
+    }
   }
 
   protected async afterStore(record: ExtendedOrder): Promise<ExtendedOrder> {
@@ -72,7 +75,9 @@ export default class UserOrderController extends RestController<
   }
 
   protected async beforeUpdate(): Promise<void | NextResponse> {
-    
+    if (this.data && this.data.platoonNumber !== undefined && this.data.platoonNumber !== null) {
+      this.data.platoonNumber = Number(this.data.platoonNumber);
+    }
   }
 
   protected async afterUpdate(record: ExtendedOrder): Promise<ExtendedOrder> {

@@ -9,6 +9,7 @@ export type ExtendedGalleryItems = {
   description?: string | null;
   imageUrl?: string | null;
   sortOrder?: number;
+  platoonNumber?: number;
   status: boolean;
   gallery?:{
     id: number;
@@ -24,6 +25,7 @@ export default class AdminGalleryItemsResource extends BaseResource<ExtendedGall
     return {
       id: gallery.id,
       slug: gallery.slug,
+      platoonNumber: gallery.platoonNumber,
       imageUrl: gallery.imageUrl
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${gallery.imageUrl}`
         : null,

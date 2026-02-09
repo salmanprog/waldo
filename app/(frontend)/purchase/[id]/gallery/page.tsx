@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import InnerBanner from "@/components/common/InnerBanner";
@@ -19,26 +20,42 @@ export default function GalleryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id: orderId } = use(params);
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get("eventId") ?? "";
 
   const [galleries, setGalleries] = useState<Gallery[]>([]);
 
+  const apiUrl = `/api/users/gallery?eventId=${eventId}&orderId=${orderId}`;
   const { data, loading, error, fetchApi } = useApi({
-    url: `/api/users/gallery?eventId=${id}`,
+    url: apiUrl,
     method: "GET",
     type: "manual",
     requiresAuth: true,
   });
 
   useEffect(() => {
-    fetchApi();
-  }, [id]);
+    if (eventId) fetchApi();
+  }, [orderId, eventId]);
 
   useEffect(() => {
     if (data && Array.isArray(data)) {
       setGalleries(data);
     }
   }, [data]);
+
+  if (!eventId) {
+    return (
+      <>
+        <InnerBanner bannerClass="products-banner" title="Gallery" />
+        <section className="products-section sec-gap">
+          <div className="container">
+            <div className="text-center py-8 text-gray-600">Invalid purchase link.</div>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>

@@ -61,6 +61,13 @@ export default class AdminGalleryController extends RestController<
       const order = Number(this.data.sortOrder);
       this.data.sortOrder = order;
     }
+    if (this.data) {
+      if (this.data.platoonNumber !== undefined && this.data.platoonNumber !== null) {
+        this.data.platoonNumber = Number(this.data.platoonNumber);
+      } else {
+        this.data.platoonNumber = 0;
+      }
+    }
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
     }
@@ -156,6 +163,14 @@ export default class AdminGalleryController extends RestController<
       if (!gallery || !gallery.galleryPath) {
         return this.sendError("Gallery not found", {}, 404);
       }
+
+      // -------- platoon number (folder name, outside items) ----------
+      const rawPlatoonNumber = formData.get("platoonNumber");
+      const platoonNumber = rawPlatoonNumber != null && String(rawPlatoonNumber).trim() !== ""
+        ? String(rawPlatoonNumber).trim()
+        : null;
+      // Platoon folder is outside items: galleryPath/platoon-1/ (not galleryPath/items/platoon-1/)
+      const uploadSubdir = platoonNumber ? `platoon-${platoonNumber}` : "items";
   
       // -------- upload dir ----------
       const relativePath = gallery.galleryPath.replace(/^\/uploads\//, "");
@@ -164,10 +179,13 @@ export default class AdminGalleryController extends RestController<
         "public",
         "uploads",
         relativePath,
-        "items"
+        uploadSubdir
       );
   
       await fs.mkdir(uploadDir, { recursive: true });
+
+      const imageUrlPrefix = `${gallery.galleryPath}/${uploadSubdir}`;
+      const platoonNumberInt = platoonNumber ? parseInt(platoonNumber, 10) : 0;
   
       // -------- save images ----------
       for (const file of images) {
@@ -182,11 +200,12 @@ export default class AdminGalleryController extends RestController<
         await prisma.galleryItem.create({
           data: {
             galleryId,
+            platoonNumber: platoonNumberInt,
             slug: await generateSlug(
               "galleryItem" as any,
               `gallery-item-${Date.now()}`
             ),
-            imageUrl: `${gallery.galleryPath}/items/${fileName}`,
+            imageUrl: `${imageUrlPrefix}/${fileName}`,
             status: true,
           },
         });

@@ -40,10 +40,12 @@ export async function POST(request: Request) {
 
   let galleryId: number | null = null;
   let fullRebuild = false;
+  let platoonNumber: string | number | null = null;
   try {
     const body = await request.json().catch(() => ({}));
     galleryId = body.galleryId != null ? Number(body.galleryId) : null;
     fullRebuild = Boolean(body.fullRebuild);
+    platoonNumber = body.platoonNumber != null && body.platoonNumber !== "" ? body.platoonNumber : null;
   } catch {
     // no body
   }
@@ -66,6 +68,9 @@ export async function POST(request: Request) {
 
   const scriptPath = path.join(process.cwd(), "scripts", "build-face-index.js");
   const args = galleryFolder ? [`--gallery=${galleryFolder}`] : [];
+  if (platoonNumber != null) {
+    args.push(`--platoon=${platoonNumber}`);
+  }
   const env = { ...process.env, ...(fullRebuild ? { FACE_INDEX_FULL: "1" } : {}) };
 
   const stream = new ReadableStream({
