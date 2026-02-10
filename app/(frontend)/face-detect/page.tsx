@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import InnerBanner from '@/components/common/InnerBanner'
 
@@ -46,7 +46,7 @@ const initialUploads: Record<Angle, UploadSlot> = {
   profile: { preview: null, file: null },
 }
 
-export default function FaceSearch() {
+function FaceSearchContent() {
   const searchParams = useSearchParams()
   const platoonFromUrl = searchParams.get('platoon') ?? searchParams.get('platoonNumber')
   const galleryFromUrl = searchParams.get('gallery')
@@ -390,6 +390,18 @@ export default function FaceSearch() {
         </div>
       </section>
     </>
+  )
+}
+
+export default function FaceDetectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <p className="text-gray-500">Loading…</p>
+      </div>
+    }>
+      <FaceSearchContent />
+    </Suspense>
   )
 }
 
