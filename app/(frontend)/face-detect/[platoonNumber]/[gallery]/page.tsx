@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { use, useState, useEffect, useRef } from 'react'
 import InnerBanner from '@/components/common/InnerBanner'
 
 const SEARCH_STEPS = [
@@ -46,11 +45,13 @@ const initialUploads: Record<Angle, UploadSlot> = {
   profile: { preview: null, file: null },
 }
 
-export default function FaceSearch() {
-  const searchParams = useSearchParams()
-  const platoonFromUrl = searchParams.get('platoon') ?? searchParams.get('platoonNumber')
-  const galleryFromUrl = searchParams.get('gallery')
-  const gallery = galleryFromUrl || 'platoon-event'
+export default function FaceSearch({
+  params,
+}: {
+  params: Promise<{ platoonNumber: string; gallery: string }>
+}) {
+  const { platoonNumber, gallery: galleryParam } = use(params)
+  const gallery = galleryParam ? decodeURIComponent(galleryParam) : 'platoon-event'
   const [uploads, setUploads] = useState<Record<Angle, UploadSlot>>(initialUploads)
   const [results, setResults] = useState<FaceResult[]>([])
   const [loading, setLoading] = useState<boolean>(false)
@@ -140,7 +141,7 @@ export default function FaceSearch() {
       body: JSON.stringify({
         imageBase64: base64,
         gallery,
-        platoonNumber: platoonFromUrl || undefined,
+        platoonNumber: platoonNumber || undefined,
         notificationEmail: notifyVia === 'email' ? notificationEmail : undefined,
         notificationPhone: notifyVia === 'phone' ? notificationPhone : undefined,
       }),

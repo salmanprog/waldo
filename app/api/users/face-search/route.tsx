@@ -78,17 +78,27 @@ const indexCache = new Map<string, { index: FaceIndexEntry[]; mtime: number }>()
 // ─────────────────────────────────────────────
 // On-demand index build (no build-face-index.js needed)
 // ─────────────────────────────────────────────
-async function getOrBuildIndex(gallery: string): Promise<FaceIndexEntry[]> {
-  const itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
+async function getOrBuildIndex(gallery: string, platoonNumber?: number | string | null): Promise<FaceIndexEntry[]> {
+  const subdir = platoonNumber != null ? `platoon-${platoonNumber}` : 'items'
+  let itemsDir = path.join(GALLERY_ROOT, gallery, subdir)
   if (!fs.existsSync(itemsDir)) {
+    // Fallback: if platoon dir missing, try items/
+    if (platoonNumber != null) {
+      itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
+      if (fs.existsSync(itemsDir)) {
+        // Use items dir, image paths stay under items/
+        return getOrBuildIndex(gallery, null)
+      }
+    }
     throw new Error('Gallery not found')
   }
 
-  const indexPath = path.join(MODEL_PATH, `index-${gallery}.json`)
+  const indexKey = platoonNumber != null ? `${gallery}-platoon-${platoonNumber}` : gallery
+  const indexPath = path.join(MODEL_PATH, `index-${indexKey.replace(/[/\\]/g, '-')}.json`)
   const dirMtime = fs.statSync(itemsDir).mtimeMs
 
   // Check in-memory cache
-  const cached = indexCache.get(gallery)
+  const cached = indexCache.get(indexKey)
   if (cached && cached.mtime >= dirMtime) {
     return cached.index
   }
@@ -99,7 +109,7 @@ async function getOrBuildIndex(gallery: string): Promise<FaceIndexEntry[]> {
       const stat = fs.statSync(indexPath)
       if (stat.mtimeMs >= dirMtime) {
         const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8')) as FaceIndexEntry[]
-        indexCache.set(gallery, { index, mtime: dirMtime })
+        indexCache.set(indexKey, { index, mtime: dirMtime })
         return index
       }
     } catch {
@@ -130,8 +140,11 @@ async function getOrBuildIndex(gallery: string): Promise<FaceIndexEntry[]> {
               .withFaceLandmarks()
               .withFaceDescriptors()
           }
+          const imagePrefix = platoonNumber != null
+            ? `/uploads/gallery/${gallery}/platoon-${platoonNumber}`
+            : `/uploads/gallery/${gallery}/items`
           return detections.map((d) => ({
-            image: `/uploads/gallery/${gallery}/items/${file}`,
+            image: `${imagePrefix}/${file}`,
             desc: Array.from(d.descriptor),
           }))
         } catch {
@@ -142,7 +155,7 @@ async function getOrBuildIndex(gallery: string): Promise<FaceIndexEntry[]> {
     for (const entries of results) index.push(...entries)
   }
 
-  indexCache.set(gallery, { index, mtime: dirMtime })
+  indexCache.set(indexKey, { index, mtime: dirMtime })
   fs.mkdirSync(MODEL_PATH, { recursive: true })
   fs.writeFileSync(indexPath, JSON.stringify(index))
   return index
@@ -159,6 +172,10 @@ export async function POST(request: Request) {
 
     const imageBase64: string | undefined = body.imageBase64
     const gallery: string | undefined = body.gallery
+    const platoonNumber: number | string | null =
+      body.platoonNumber != null && body.platoonNumber !== ''
+        ? body.platoonNumber
+        : null
     const threshold: number = body.threshold ?? 0.6
     const notificationEmail: string | undefined = body.notificationEmail
     const notificationPhone: string | undefined = body.notificationPhone
@@ -216,7 +233,7 @@ export async function POST(request: Request) {
     // ─────────────────────────────
     let index: FaceIndexEntry[]
     try {
-      index = await getOrBuildIndex(gallery)
+      index = await getOrBuildIndex(gallery, platoonNumber)
     } catch (err) {
       return NextResponse.json(
         { code: 404, message: (err as Error).message },

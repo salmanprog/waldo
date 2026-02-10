@@ -11,7 +11,8 @@ export default function EditGallery() {
 
   // ---------------- State ----------------
   const [title, setTitle] = useState("");
-  const [eventCategoryId, setEventCategoryId] = useState(""); // CATEGORY SLUG
+  const [eventCategoryId, setEventCategoryId] = useState(""); // CATEGORY ID (for submit)
+  const [eventCategorySlug, setEventCategorySlug] = useState(""); // CATEGORY SLUG (for events API)
   const [eventId, setEventId] = useState("");                 // EVENT ID
   const [status, setStatus] = useState("1");
   const [image, setImage] = useState<File | null>(null);
@@ -31,8 +32,8 @@ export default function EditGallery() {
 
   // ---------------- Events ----------------
   const { data: eventList, fetchApi: fetchEvents } = useApi({
-    url: (eventCategoryId
-      ? `/api/admin/events?cat_id=${eventCategoryId}`
+    url: (eventCategorySlug
+      ? `/api/admin/events?cat_id=${eventCategorySlug}`
       : "") as string,
     method: "GET",
     type: "manual",
@@ -69,9 +70,10 @@ export default function EditGallery() {
     setDescription(gallery.description || "");
     setStatus(gallery.status ? "1" : "0");
     setIs_face_recognition(gallery.is_face_recognition ? "1" : "0");
-    // STEP 1: set category slug
-    if (gallery.eventCategory?.slug) {
-      setEventCategoryId(gallery.eventCategory.slug);
+    // STEP 1: set category id and slug
+    if (gallery.eventCategory) {
+      setEventCategoryId(String(gallery.eventCategory.id));
+      setEventCategorySlug(gallery.eventCategory.slug || "");
     }
 
     // STEP 2: store event id (do NOT set directly yet)
@@ -82,9 +84,9 @@ export default function EditGallery() {
 
   // ---------------- Fetch events when category changes ----------------
   useEffect(() => {
-    if (!eventCategoryId) return;
+    if (!eventCategorySlug) return;
     fetchEvents();
-  }, [eventCategoryId]);
+  }, [eventCategorySlug]);
 
   // ---------------- Auto-select event AFTER event list loads ----------------
   useEffect(() => {
@@ -159,14 +161,20 @@ export default function EditGallery() {
             <select
               className="h-11 w-full rounded border px-4"
               value={eventCategoryId}
+              disabled
               onChange={(e) => {
-                setEventCategoryId(e.target.value);
+                const selectedId = e.target.value;
+                const selectedCategory = categoryList?.find(
+                  (cat: any) => String(cat.id) === selectedId
+                );
+                setEventCategoryId(selectedId);
+                setEventCategorySlug(selectedCategory?.slug || "");
                 setEventId(""); // reset event on change
               }}
             >
               <option value="">-- Select Category --</option>
               {categoryList?.map((cat: any) => (
-                <option key={cat.id} value={cat.slug}>
+                <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
               ))}
@@ -179,8 +187,7 @@ export default function EditGallery() {
             <select
               className="h-11 w-full rounded border px-4"
               value={eventId}
-              onChange={(e) => setEventId(e.target.value)}
-              disabled={!eventCategoryId}
+              disabled
             >
               <option value="">-- Select Event --</option>
               {eventList?.map((ev: any) => (
