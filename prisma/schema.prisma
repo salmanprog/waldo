@@ -315,3 +315,35 @@ enum OrderStatus {
   FAILED
   REFUNDED
 }
+
+model CoffeeTableBook {
+  id        Int       @id @default(autoincrement())
+  slug      String    @unique @db.VarChar(255)
+  firstName String    @map("first_name") @db.VarChar(150)
+  lastName  String    @map("last_name") @db.VarChar(150)
+  email     String    @db.VarChar(255)
+  phone     String?   @db.VarChar(50)
+  address   String?   @db.Text
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+
+  images CoffeeTableBookImage[]
+
+  @@map("coffe_table_book")
+}
+
+model CoffeeTableBookImage {
+  id                Int            @id @default(autoincrement())
+  slug      String?   @unique @db.VarChar(255)
+  coffeTableBookId  Int            @map("coffe_table_book_id")
+  imageUrl          String         @db.Text
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @db.Timestamp(6)
+
+  coffeTableBook    CoffeeTableBook @relation(fields: [coffeTableBookId], references: [id], onDelete: Cascade)
+
+  @@index([coffeTableBookId])
+  @@map("coffe_table_book_images")
+}

@@ -23,6 +23,7 @@ const protectedApiRoutes = [
   { path: "/api/admin/gallery-items", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/gallery-items/list", methods: ["GET"] },
   { path: "/api/admin/gallery-items/multiple", methods: ["POST"] },
+  { path: "/api/admin/coffee-table-book", methods: ["POST", "GET", "PATCH", "DELETE"] },
   
 ];
 

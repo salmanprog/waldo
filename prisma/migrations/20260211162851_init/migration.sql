@@ -263,6 +263,38 @@ CREATE TABLE `gallery_items` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `coffe_table_book` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `slug` VARCHAR(255) NULL,
+    `first_name` VARCHAR(150) NOT NULL,
+    `last_name` VARCHAR(150) NOT NULL,
+    `email` VARCHAR(255) NOT NULL,
+    `phone` VARCHAR(50) NULL,
+    `address` TEXT NULL,
+    `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `deletedAt` TIMESTAMP(6) NULL,
+
+    UNIQUE INDEX `coffe_table_book_slug_key`(`slug`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `coffe_table_book_images` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `slug` VARCHAR(255) NULL,
+    `coffe_table_book_id` INTEGER NOT NULL,
+    `imageUrl` TEXT NOT NULL,
+    `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `deletedAt` TIMESTAMP(6) NULL,
+
+    UNIQUE INDEX `coffe_table_book_images_slug_key`(`slug`),
+    INDEX `coffe_table_book_images_coffe_table_book_id_idx`(`coffe_table_book_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `UserApiToken` ADD CONSTRAINT `UserApiToken_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
@@ -295,3 +327,6 @@ ALTER TABLE `gallery_platoon` ADD CONSTRAINT `gallery_platoon_galleryId_fkey` FO
 
 -- AddForeignKey
 ALTER TABLE `gallery_items` ADD CONSTRAINT `gallery_items_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `coffe_table_book_images` ADD CONSTRAINT `coffe_table_book_images_coffe_table_book_id_fkey` FOREIGN KEY (`coffe_table_book_id`) REFERENCES `coffe_table_book`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

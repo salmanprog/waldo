@@ -62,6 +62,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: FolderOpen,
+    name: 'Coffee Table Book',
+    subItems: [
+      { name: 'Coffee Table Book', path: '/admin/coffee-table-book/', pro: false },
+    ],
+  },
+  {
+    icon: FolderOpen,
     name: 'Events Gallery',
     subItems: [
       { name: 'Gallery', path: '/admin/gallery/', pro: false },
