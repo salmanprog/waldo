@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useApi from "@/utils/useApi";
 import { useCartStore } from "@/zustand/cart";
-import { FaShoppingCart } from "react-icons/fa";
+import { FaShoppingCart, FaBook } from "react-icons/fa";
 
 
 // Move productCategories outside component to prevent recreation
@@ -169,6 +169,9 @@ export default function Header() {
                                     {cartCount}
                                 </span>
                             )}
+                        </Link>
+                        <Link href="/coffe-table-book" className="relative p-2 text-white hover:text-[#061246] transition-colors">
+                            <FaBook className="text-[32px]" />
                         </Link>
                         <button className="menu-icon" onClick={toggleMenu}>
                             {isOpen ? <Icons.close className="text-[24px]" /> : <Icons.menu className="text-[24px]" />}
