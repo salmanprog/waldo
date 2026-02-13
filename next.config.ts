@@ -31,6 +31,16 @@ const nextConfig: NextConfig = {
         port: "3000",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "thorntonstudios.sitestaginglink.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "thorntonstudios.sitestaginglink.com",
+        pathname: "/**",
+      },
     ],
   },
 
