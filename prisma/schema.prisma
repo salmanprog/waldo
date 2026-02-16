@@ -106,6 +106,7 @@ model User {
   apiTokens UserApiToken[]
   addresses UserAddress[]
   orders    Order[]
+  favouriteImagesCoffeBooks FavouriteImagesCoffeBook[]
 
   @@index([name])
 }
@@ -282,9 +283,24 @@ model GalleryItem {
 
   // Relation
   gallery     Gallery   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  favouriteImagesCoffeBooks FavouriteImagesCoffeBook[]
 
   @@index([galleryId])
   @@map("gallery_items")
+}
+
+model FavouriteImagesCoffeBook {
+  id               Int    @id @default(autoincrement())
+  userId           Int
+  galleryImageId   Int    @map("gallery_image_id")
+  galleryImagePath String @map("gallery_image_path") @db.Text
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  galleryItem GalleryItem @relation(fields: [galleryImageId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([galleryImageId])
+  @@map("favourite_images_coffe_book")
 }
 
 enum MediaType {

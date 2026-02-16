@@ -8,6 +8,7 @@ const protectedApiRoutes = [
   { path: "/api/users/orders", methods: ["GET"] },
   { path: "/api/users/gallery", methods: ["GET"] },
   { path: "/api/users/gallery-items", methods: ["GET"] },
+  { path: "/api/users/favourite-images-coffe-book", methods: ["GET", "POST", "DELETE"] },
   { path: "/api/users/face-search/search", methods: ["POST"] },
   { path: "/api/admin/profile", methods: ["GET", "PATCH"] },
   { path: "/api/admin/address", methods: ["POST", "GET", "PATCH", "DELETE"] },

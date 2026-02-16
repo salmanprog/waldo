@@ -56,10 +56,14 @@ export default class UserCoffeeTableBookController extends RestController<
   async store(data?: Partial<ExtendedCoffeeTableBook>): Promise<NextResponse> {
     try {
       const d = (data || this.data) as Record<string, unknown>;
-      
-      // Validate images
-      const images = d.images as File[];
-      if (!images || images.length === 0) {
+      const imageUrls = d.imageUrls as string[] | undefined;
+      const images = d.images as File[] | undefined;
+
+      // Accept either imageUrls (favourite paths) or images (file upload)
+      const hasImageUrls = imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0;
+      const hasFiles = images && Array.isArray(images) && images.length > 0;
+
+      if (!hasImageUrls && !hasFiles) {
         return this.sendError("At least one image is required", {}, 422);
       }
 
@@ -81,35 +85,49 @@ export default class UserCoffeeTableBookController extends RestController<
         },
       });
 
-      // Upload directory
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "coffee-table-book",
-        String(coffeeTableBook.id)
-      );
-      await fs.mkdir(uploadDir, { recursive: true });
+      // Use favourite image URLs directly (no file upload)
+      if (hasImageUrls) {
+        for (let i = 0; i < imageUrls!.length; i++) {
+          const imageUrl = imageUrls![i];
+          if (!imageUrl || typeof imageUrl !== "string") continue;
 
-      // Save images
-      for (let i = 0; i < images.length; i++) {
-        const file = images[i];
-        if (!(file instanceof Blob)) continue;
+          await prisma.coffeeTableBookImage.create({
+            data: {
+              slug: await generateSlug("coffeeTableBookImage" as any, `image-${coffeeTableBook.id}-${Date.now()}-${i}`),
+              coffeTableBookId: coffeeTableBook.id,
+              imageUrl: imageUrl.trim(),
+            },
+          });
+        }
+      } else if (hasFiles) {
+        // File upload flow (legacy)
+        const uploadDir = path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "coffee-table-book",
+          String(coffeeTableBook.id)
+        );
+        await fs.mkdir(uploadDir, { recursive: true });
 
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const fileName = `${Date.now()}-${i}-${file.name}`;
-        const filePath = path.join(uploadDir, fileName);
+        for (let i = 0; i < images!.length; i++) {
+          const file = images![i];
+          if (!(file instanceof Blob)) continue;
 
-        await fs.writeFile(filePath, buffer);
+          const buffer = Buffer.from(await file.arrayBuffer());
+          const fileName = `${Date.now()}-${i}-${file.name}`;
+          const filePath = path.join(uploadDir, fileName);
 
-        // Save to database
-        await prisma.coffeeTableBookImage.create({
-          data: {
-            slug: await generateSlug("coffeeTableBookImage" as any, `image-${coffeeTableBook.id}-${Date.now()}-${i}`),
-            coffeTableBookId: coffeeTableBook.id,
-            imageUrl: `/uploads/coffee-table-book/${coffeeTableBook.id}/${fileName}`,
-          },
-        });
+          await fs.writeFile(filePath, buffer);
+
+          await prisma.coffeeTableBookImage.create({
+            data: {
+              slug: await generateSlug("coffeeTableBookImage" as any, `image-${coffeeTableBook.id}-${Date.now()}-${i}`),
+              coffeTableBookId: coffeeTableBook.id,
+              imageUrl: `/uploads/coffee-table-book/${coffeeTableBook.id}/${fileName}`,
+            },
+          });
+        }
       }
 
       return this.__sendResponse(
