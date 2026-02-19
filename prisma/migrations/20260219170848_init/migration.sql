@@ -222,6 +222,8 @@ CREATE TABLE `gallery` (
     `description` TEXT NULL,
     `galleryPath` VARCHAR(255) NULL,
     `is_face_recognition` BOOLEAN NOT NULL DEFAULT false,
+    `face_recognition_heading` VARCHAR(50) NULL,
+    `is_coff_book` BOOLEAN NOT NULL DEFAULT false,
     `status` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -264,9 +266,21 @@ CREATE TABLE `gallery_items` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `favourite_images_coffe_book` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `gallery_image_id` INTEGER NOT NULL,
+    `gallery_image_path` TEXT NOT NULL,
+
+    INDEX `favourite_images_coffe_book_userId_idx`(`userId`),
+    INDEX `favourite_images_coffe_book_gallery_image_id_idx`(`gallery_image_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `coffe_table_book` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `slug` VARCHAR(255) NULL,
+    `slug` VARCHAR(255) NOT NULL,
     `first_name` VARCHAR(150) NOT NULL,
     `last_name` VARCHAR(150) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
@@ -327,6 +341,12 @@ ALTER TABLE `gallery_platoon` ADD CONSTRAINT `gallery_platoon_galleryId_fkey` FO
 
 -- AddForeignKey
 ALTER TABLE `gallery_items` ADD CONSTRAINT `gallery_items_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `favourite_images_coffe_book` ADD CONSTRAINT `favourite_images_coffe_book_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `favourite_images_coffe_book` ADD CONSTRAINT `favourite_images_coffe_book_gallery_image_id_fkey` FOREIGN KEY (`gallery_image_id`) REFERENCES `gallery_items`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `coffe_table_book_images` ADD CONSTRAINT `coffe_table_book_images_coffe_table_book_id_fkey` FOREIGN KEY (`coffe_table_book_id`) REFERENCES `coffe_table_book`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

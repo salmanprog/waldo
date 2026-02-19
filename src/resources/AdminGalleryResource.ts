@@ -4,6 +4,8 @@ import BaseResource from "@/resources/BaseResource";
 export type ExtendedGallery = {
   id?: number;
   is_face_recognition?: boolean;
+  face_recognition_heading?: string | null;
+  is_coff_book?: boolean;
   eventCategoryId?: number | null;
   eventId?: number | null;
 
@@ -50,6 +52,8 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
       slug: gallery.slug,
       description: gallery.description,
       is_face_recognition: gallery.is_face_recognition,
+      face_recognition_heading: gallery.face_recognition_heading ?? null,
+      is_coff_book: gallery.is_coff_book ?? false,
       imageUrl: gallery.imageUrl
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${gallery.imageUrl}`
         : null,

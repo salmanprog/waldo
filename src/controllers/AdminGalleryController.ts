@@ -65,6 +65,9 @@ export default class AdminGalleryController extends RestController<
     if (this.data?.is_face_recognition !== undefined && this.data?.is_face_recognition !== null) {
       this.data.is_face_recognition = String(this.data.is_face_recognition) === "1";
     }
+    if (this.data?.is_coff_book !== undefined && this.data?.is_coff_book !== null) {
+      this.data.is_coff_book = String(this.data.is_coff_book) === "1";
+    }
   }
 
   protected async afterStore(record: ExtendedGallery): Promise<ExtendedGallery> {
@@ -84,6 +87,9 @@ export default class AdminGalleryController extends RestController<
     }
     if (this.data?.is_face_recognition !== undefined && this.data?.is_face_recognition !== null) {
       this.data.is_face_recognition = String(this.data.is_face_recognition) === "1";
+    }
+    if (this.data?.is_coff_book !== undefined && this.data?.is_coff_book !== null) {
+      this.data.is_coff_book = String(this.data.is_coff_book) === "1";
     }
   }
 

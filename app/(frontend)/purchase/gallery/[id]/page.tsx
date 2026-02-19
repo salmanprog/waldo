@@ -11,6 +11,7 @@ interface Gallery {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  gallery?: { id: number; title: string; slug: string; is_coff_book?: boolean };
 }
 
 interface FavouriteItem {
@@ -28,7 +29,7 @@ export default function GalleryPage({
 
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [favouriteIds, setFavouriteIds] = useState<Set<number>>(new Set());
-
+  
   const { data, loading, error, fetchApi } = useApi({
     url: `/api/users/gallery-items?galleryId=${id}`,
     method: "GET",
@@ -150,6 +151,7 @@ export default function GalleryPage({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
                           </svg>
                         </a>
+                        {galleries[0]?.gallery?.is_coff_book && (
                         <button
                           type="button"
                           onClick={() => toggleFavourite(gallery.id, gallery.imageUrl || "")}
@@ -175,6 +177,7 @@ export default function GalleryPage({
                             </>
                           )}
                         </button>
+                        )}
                     </div>
                 </div>
               ))}

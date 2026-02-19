@@ -61,6 +61,7 @@ export default function FaceSearch({
   const [notificationPhone, setNotificationPhone] = useState('')
   const [notifyVia, setNotifyVia] = useState<'email' | 'phone'>('email')
   const [searchStepIndex, setSearchStepIndex] = useState(0)
+  const [faceRecognitionHeading, setFaceRecognitionHeading] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<Angle, HTMLInputElement | null>>({
     frontal: null,
     threeQuarter: null,
@@ -193,6 +194,25 @@ export default function FaceSearch({
   }, [])
 
   useEffect(() => {
+    if (!gallery) return
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : null
+    if (!token) return
+    fetch(`/api/users/gallery/${encodeURIComponent(gallery)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.code === 200 && json.data?.face_recognition_heading) {
+          setFaceRecognitionHeading(json.data.face_recognition_heading)
+        }
+      })
+      .catch(() => {})
+  }, [gallery])
+
+  useEffect(() => {
     if (!loading) setSearchStepIndex(0)
     else {
       const t = setInterval(() => setSearchStepIndex((i) => (i + 1) % SEARCH_STEPS.length), 1400)
@@ -215,7 +235,7 @@ export default function FaceSearch({
 
   return (
     <>
-      <InnerBanner title="Face Search" bannerClass="products-banner" />
+      <InnerBanner title={faceRecognitionHeading || 'Face Search'} bannerClass="products-banner" />
       <section className="py-20">
         <div className="container">
           <div className="max-w-3xl mx-auto space-y-8">

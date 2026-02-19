@@ -15,6 +15,7 @@ export type ExtendedGalleryItems = {
     id: number;
     title: string;
     slug: string;
+    is_coff_book?: boolean;
   }
 };
 
@@ -34,6 +35,7 @@ export default class AdminGalleryItemsResource extends BaseResource<ExtendedGall
             id: gallery.gallery.id,
             title: gallery.gallery.title,
             slug: gallery.gallery.slug,
+            is_coff_book: gallery.gallery.is_coff_book ?? false,
           }
         : null,
     };

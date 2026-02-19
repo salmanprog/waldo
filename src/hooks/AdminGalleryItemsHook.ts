@@ -15,6 +15,7 @@ export default class AdminGalleryItemsHook {
           id: true,
           title: true,
           slug: true,
+          is_coff_book: true,
         },
       },
     };

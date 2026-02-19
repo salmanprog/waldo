@@ -20,6 +20,8 @@ export default function AddGallery() {
   const [image, setImage] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [is_face_recognition, setIs_face_recognition] = useState<"1" | "0">("0");
+  const [face_recognition_heading, setFace_recognition_heading] = useState("");
+  const [is_coff_book, setIs_coff_book] = useState<"1" | "0">("0");
   const [errorMsg, setErrorMsg] = useState("");
   const [eventCategorySlug, setEventCategorySlug] = useState("");
 
@@ -72,6 +74,8 @@ export default function AddGallery() {
       if (eventId) formData.append("eventId", eventId);
       formData.append("description", description);
       formData.append("is_face_recognition", is_face_recognition);
+      if (is_face_recognition === "1") formData.append("face_recognition_heading", face_recognition_heading);
+      formData.append("is_coff_book", is_coff_book);
       formData.append("status", status);
       formData.append("image", image);
 
@@ -193,6 +197,49 @@ export default function AddGallery() {
                   value="0"
                   checked={is_face_recognition === "0"}
                   onChange={() => setIs_face_recognition("0")}
+                  className="w-4 h-4"
+                />
+                <span>No</span>
+              </label>
+            </div>
+          </div>
+
+          {is_face_recognition === "1" && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Face Recognition Heading</label>
+              <input
+                type="text"
+                name="face_recognition_heading"
+                placeholder="Enter face recognition heading"
+                value={face_recognition_heading}
+                onChange={(e) => setFace_recognition_heading(e.target.value)}
+                className="h-11 w-full rounded-lg border px-4"
+              />
+            </div>
+          )}
+
+          {/* is_coff_book */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Coffe Book Table</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="is_coff_book"
+                  value="1"
+                  checked={is_coff_book === "1"}
+                  onChange={() => setIs_coff_book("1")}
+                  className="w-4 h-4"
+                />
+                <span>Yes</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="is_coff_book"
+                  value="0"
+                  checked={is_coff_book === "0"}
+                  onChange={() => setIs_coff_book("0")}
                   className="w-4 h-4"
                 />
                 <span>No</span>
