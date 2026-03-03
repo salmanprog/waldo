@@ -182,7 +182,7 @@ export default function EditEvent() {
             </div>
 
             {/* Image */}
-            <div>
+            {/* <div>
               <label className="block mb-1 text-sm font-medium">Event Image</label>
 
               {oldImage && !image && (
@@ -205,7 +205,7 @@ export default function EditEvent() {
                 <p className="text-sm text-gray-500">Click to upload or drag & drop</p>
                 {image && <p className="text-xs text-green-600 mt-2">{image.name}</p>}
               </label>
-            </div>
+            </div> */}
             {/* Face Recognition */}
             <div>
               <label className="block mb-2 text-sm font-medium">Face Recognition</label>

@@ -26,7 +26,14 @@ export default function Header() {
     const hoverRef = useRef(false);
     const router = useRouter();
     const { user, loadingUser } = useCurrentUser();
+    const [adminToken, setAdminToken] = useState(null);
     const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        if (typeof document === "undefined") return;
+        const match = document.cookie.match(/(^| )token=([^;]+)/);
+        setAdminToken(match ? match[2] : null);
+    }, []);
     const { data, loading: apiLoading, error: apiError } = useApi({
         url: "/api/users/events/category",
         type: "mount",
@@ -158,8 +165,14 @@ export default function Header() {
                             </>
                         ) : (
                             <>
-                                <Link className="btn btn-secondary" href="/login">Login</Link>
-                                <Link className="btn btn-primary" href="/signup">Signup</Link>
+                                {adminToken ? (
+                                    <Link className="btn btn-secondary" href="/admin/dashboard">Dashboard</Link>
+                                ) : (
+                                    <>
+                                        <Link className="btn btn-secondary" href="/login">Login</Link>
+                                        <Link className="btn btn-primary" href="/signup">Signup</Link>
+                                    </>
+                                )}
                             </>
                         )}
                         <Link href="/cart" className="relative p-2 text-white hover:text-[#061246] transition-colors">

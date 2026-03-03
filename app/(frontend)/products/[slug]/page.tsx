@@ -68,30 +68,38 @@ export default function ProductDescriptionPage({ params }: ProductDescriptionPro
         }
     }, [slug]);
 
-    // Update events when data is received and fetch FAQs
+    // Update events when data is received
     useEffect(() => {
         if (data && Array.isArray(data)) {
             setEvents(data);
-            // Fetch FAQs using the categoryId from the first event
-            if (data.length > 0 && data[0].categoryId) {
-                const fetchCategoryFaqs = async () => {
-                    try {
-                        const response = await fetch(`/api/users/events/category/faq?eventCategoryId=${data[0].categoryId}`);
-                        const result = await response.json();
-                        if (result.data && Array.isArray(result.data)) {
-                            setFaqs(result.data.map((faq: any) => ({
-                                question: faq.question,
-                                answer: faq.answer,
-                            })));
-                        }
-                    } catch (err) {
-                        console.error("Error fetching FAQs:", err);
-                    }
-                };
-                fetchCategoryFaqs();
-            }
         }
     }, [data]);
+
+    // Fetch FAQs by category slug (independent of events data)
+    useEffect(() => {
+        if (!slug) return;
+        const fetchFaqs = async () => {
+            try {
+                const catRes = await fetch("/api/users/events/category");
+                const catResult = await catRes.json();
+                const categories = Array.isArray(catResult?.data) ? catResult.data : [];
+                const category = categories.find((c: { slug: string }) => c.slug === slug);
+                const eventCategoryId = category?.id;
+                if (!eventCategoryId) return;
+                const response = await fetch(`/api/users/events/category/faq?eventCategoryId=${eventCategoryId}`);
+                const result = await response.json();
+                if (result.data && Array.isArray(result.data)) {
+                    setFaqs(result.data.map((faq: { question: string; answer: string }) => ({
+                        question: faq.question,
+                        answer: faq.answer,
+                    })));
+                }
+            } catch (err) {
+                console.error("Error fetching FAQs:", err);
+            }
+        };
+        fetchFaqs();
+    }, [slug]);
 
     
     return (

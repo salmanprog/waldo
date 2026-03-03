@@ -148,7 +148,7 @@ export default function AddGallery() {
 
           {/* Event (Optional) */}
           <div>
-            <label className="block text-sm font-medium">Event</label>
+            <label className="block text-sm font-medium">Event Package</label>
             <select
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}

@@ -189,7 +189,7 @@ export default function EditGallery() {
 
           {/* Event */}
           <div>
-            <label className="text-sm font-medium">Event</label>
+            <label className="text-sm font-medium">Event Package</label>
             <select
               className="h-11 w-full rounded border px-4"
               value={eventId}

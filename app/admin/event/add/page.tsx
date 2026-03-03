@@ -147,7 +147,7 @@ export default function AddEvent() {
           </div>
 
           {/* Image */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium">Event Image</label>
             <label className="border-2 border-dashed p-6 rounded-lg block text-center cursor-pointer">
               <input
@@ -161,7 +161,7 @@ export default function AddEvent() {
               <p>Click to upload or drag & drop</p>
               {image && <p className="text-xs mt-2">{image.name}</p>}
             </label>
-          </div>
+          </div> */}
           {/* Face Recognition */}
           <div>
             <label className="block text-sm font-medium mb-2">Face Recognition</label>
