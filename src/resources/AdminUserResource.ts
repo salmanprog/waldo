@@ -1,14 +1,27 @@
 import BaseResource from "@/resources/BaseResource";
 import { User, UserRole, UserApiToken } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 // Extend User type to include relations
 export type ExtendedUser = User & {
   userRole?: UserRole | null;
   apiTokens?: UserApiToken[];
+  categoryId?: string | null;
 };
 
 export default class AdminUserResource extends BaseResource<ExtendedUser> {
   async toArray(user: ExtendedUser): Promise<Record<string, unknown>> {
+    let categoryName: string | null = null;
+    if (user.categoryId) {
+      const categoryIdNum = parseInt(String(user.categoryId), 10);
+      if (!isNaN(categoryIdNum)) {
+        const category = await prisma.eventCategory.findUnique({
+          where: { id: categoryIdNum },
+          select: { name: true },
+        });
+        categoryName = category?.name ?? null;
+      }
+    }
     return {
       id: user.id,
       slug: user.slug,
@@ -17,6 +30,8 @@ export default class AdminUserResource extends BaseResource<ExtendedUser> {
       lname: user.lname,
       email: user.email,
       mobileNumber: user.mobileNumber,
+      categoryId: user.categoryId,
+      categoryName: categoryName,
       dob: user.dob,
       age: user.age,
       gender: user.gender,

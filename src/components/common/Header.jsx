@@ -53,6 +53,7 @@ export default function Header() {
                     name: category.name,
                     path: category.slug ? `/products/${category.slug}` : "/products",
                     slug: category.slug,
+                    is_available: category.is_available,
                 }));
                 setCategories(mappedCategories);
             }
@@ -116,7 +117,7 @@ export default function Header() {
                                                 categories.map((category, index) => (
                                                     <li key={index}>
                                                         <Link
-                                                            href={category.path}
+                                                            href={category.is_available === false ? "#" : category.path}
                                                             className="block px-4 py-2 text-sm text-[#828282] hover:bg-gray-800 transition-colors"
                                                             onClick={handleDropdownClick}
                                                         >

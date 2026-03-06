@@ -14,6 +14,7 @@ interface EventCategory {
   name: string;
   slug: string;
   status: false | true;
+  is_available?: boolean;
 }
 
 export default function EventCategoryList() {
@@ -164,6 +165,12 @@ export default function EventCategoryList() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
+                Available
+              </TableCell>
+              <TableCell
+                isHeader
+                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
                 Status
               </TableCell>
               <TableCell
@@ -192,6 +199,9 @@ export default function EventCategoryList() {
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   {cat.slug}
+                </TableCell>
+                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                  {cat.is_available ? "Yes" : "No"}
                 </TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   <Badge

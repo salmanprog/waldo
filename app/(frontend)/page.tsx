@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Sec from "@/components/home/Sec";
 import Image from "next/image";
 import useApi from "@/utils/useApi";
@@ -13,6 +14,8 @@ interface EventCategory {
   description: string | null;
   status: boolean;
   createdAt: string;
+  is_available?: boolean;
+  available_text?: string;
 }
 
 export default function HomePage() {
@@ -172,17 +175,42 @@ export default function HomePage() {
           <div className="container">
             <h2 className="text-[40px] font-bold text-[#000000] text-center mb-10 uppercase">Products</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {categories.map((category, index) => (
-                <Sec
-                  key={category.id}
-                  title={category.name}
-                  sectionClass="border-2 border-white/100"
-                  href={`/products/${category.slug}`}
-                  backgroundImage={category.imageUrl}
-
-                />
-
-              ))}
+              {categories.map((category) => {
+                const unavailable = category.is_available === false;
+                return (
+                  <div
+                    key={category.id}
+                    className={unavailable ? "opacity-60 grayscale pointer-events-none" : ""}
+                  >
+                    {unavailable ? (
+                      <div className="group relative inline-block w-full pointer-events-auto">
+                        <Link href="#">
+                          <div className="py-[20px]">
+                            <div className="btn btn-primary w-full flex justify-center items-center gap-2 mt-2">
+                              <span className="whitespace-nowrap">{category.name}</span>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </Link>
+                        {category.available_text ? (
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs font-normal text-white bg-gray-800 dark:bg-gray-700 rounded-lg shadow-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 z-10 max-w-[200px] text-center whitespace-normal">
+                            {category.available_text}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <Sec
+                        title={category.name}
+                        sectionClass="border-2 border-white/100"
+                        href={`/products/${category.slug}`}
+                        backgroundImage={category.imageUrl}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>

@@ -18,6 +18,9 @@ export default class AdminEventCategoryResource extends BaseResource<ExtendedEve
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${eventCategory.imageUrl}`
         : null,
       description: eventCategory.description,
+      is_available: eventCategory.is_available,
+      available_text: eventCategory.available_text,
+      is_platoon: eventCategory.is_platoon,
       status: eventCategory.status,
       createdAt: eventCategory.createdAt,
     };

@@ -17,6 +17,7 @@ interface AccountUser {
   name: string | null;
   email: string | null;
   mobileNumber?: string | null;
+  platoon?: string | null;
   imageUrl?: string | null;
   dob?: string | null;
   gender?: string | null;
@@ -37,6 +38,7 @@ export default function AccountPage() {
   const [formData, setFormData] = useState({
     name: "",
     mobileNumber: "",
+    platoon: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -48,6 +50,7 @@ export default function AccountPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Helper function to normalize image URL
   const normalizeImageUrl = (url: string | null | undefined): string | null => {
@@ -64,19 +67,57 @@ export default function AccountPage() {
     }
   };
 
-  // Update form data when user loads
+  // Update form data when user loads (from currentUser cache)
   useEffect(() => {
     if (user) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         name: user.name || "",
         mobileNumber: user.mobileNumber || "",
-      });
+        platoon: user.platoon ?? prev.platoon,
+      }));
       if (user.imageUrl) {
         const normalizedUrl = normalizeImageUrl(user.imageUrl);
         setImagePreview(normalizedUrl);
       }
     }
   }, [user]);
+
+  // Fetch fresh profile from API when account page loads so platoon (and other DB fields) are shown
+  useEffect(() => {
+    if (!user?.id) return;
+    setProfileLoaded(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || profileLoaded) return;
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const res: ApiResponse<AccountUser> = await fetchProfile();
+        if (isMounted && res?.code === 200 && res?.data) {
+          const profile = res.data;
+          setFormData({
+            name: profile.name || "",
+            mobileNumber: profile.mobileNumber || "",
+            platoon: profile.platoon ?? "",
+          });
+          if (profile.imageUrl) {
+            const normalizedUrl = normalizeImageUrl(profile.imageUrl);
+            setImagePreview(normalizedUrl);
+          }
+          setProfileLoaded(true);
+        }
+      } catch {
+        if (isMounted) setProfileLoaded(true);
+      }
+    };
+    loadProfile();
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, profileLoaded]);
 
   // Set page title
   useEffect(() => {
@@ -94,6 +135,14 @@ export default function AccountPage() {
     url: user ? `/api/users/profile/${user.id}` : "",
     type: "manual",
     method: "PATCH",
+    requiresAuth: true,
+  });
+
+  // Fetch fresh profile (including platoon) when account page loads so DB value is shown
+  const { fetchApi: fetchProfile } = useApi({
+    url: user ? `/api/users/profile/${user.id}` : "",
+    method: "GET",
+    type: "manual",
     requiresAuth: true,
   });
 
@@ -173,8 +222,8 @@ export default function AccountPage() {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
-      // Always send mobileNumber, even if empty (to allow clearing it)
       formDataToSend.append("mobileNumber", formData.mobileNumber || "");
+      formDataToSend.append("platoon", formData.platoon || "");
 
       // Add image if a new one was selected
       const imageInput = document.getElementById("image") as HTMLInputElement;
@@ -400,6 +449,12 @@ export default function AccountPage() {
                             {user.mobileNumber || "Not set"}
                           </p>
                         </div>
+                        <div>
+                          <Label>Platoon Number</Label>
+                          <p className="mt-1 text-gray-900 font-medium">
+                            {user.platoon || "Not set"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -493,6 +548,20 @@ export default function AccountPage() {
                           onChange={handleInputChange}
                           error={!!errors.mobileNumber}
                           hint={errors.mobileNumber}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="platoon">Platoon</Label>
+                        <Input
+                          id="platoon"
+                          name="platoon"
+                          type="text"
+                          value={formData.platoon}
+                          onChange={handleInputChange}
+                          error={!!errors.platoon}
+                          hint={errors.platoon}
+                          placeholder="Enter platoon number"
                         />
                       </div>
                     </div>

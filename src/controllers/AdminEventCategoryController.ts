@@ -69,6 +69,12 @@ export default class AdminEventCategoryController extends RestController<
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
     }
+    if (this.data?.is_available !== undefined) {
+      this.data.is_available = String(this.data.is_available) === "1";
+    }
+    if (this.data?.is_platoon !== undefined) {
+      this.data.is_platoon = String(this.data.is_platoon) === "1";
+    }
   }
 
   protected async afterStore(record: ExtendedEventCategory): Promise<ExtendedEventCategory> {
@@ -88,6 +94,12 @@ export default class AdminEventCategoryController extends RestController<
     // }
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
+    }
+    if (this.data?.is_available !== undefined) {
+      this.data.is_available = String(this.data.is_available) === "1";
+    }
+    if (this.data?.is_platoon !== undefined) {
+      this.data.is_platoon = String(this.data.is_platoon) === "1";
     }
   }
 

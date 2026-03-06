@@ -9,6 +9,7 @@ export const storeUser = yup.object({
 export const updateUser = yup.object({
   name: yup.string().min(2).max(20).optional(),
   mobileNumber: yup.string().optional().nullable(),
+  platoon: yup.string().optional().nullable(),
 });
 
 export const changePassword = yup.object({

@@ -21,6 +21,9 @@ export default function EditEventCategory() {
   const [image, setImage] = useState<File | null>(null);
   const [oldImage, setOldImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
+  const [isAvailable, setIsAvailable] = useState<"yes" | "no">("yes");
+  const [availableText, setAvailableText] = useState("");
+  const [isPlatoon, setIsPlatoon] = useState<"yes" | "no">("yes");
   const [errorMsg, setErrorMsg] = useState("");
   const { data, fetchApi } = useApi({
     url: `/api/admin/events/category/${slug}`,
@@ -41,11 +44,14 @@ export default function EditEventCategory() {
 
   useEffect(() => {
     if (data) {
-      const c = data;
-      setName(c.name);
+      const c = data as { name?: string; description?: string; status?: boolean; imageUrl?: string | null; is_available?: boolean; available_text?: string; is_platoon?: boolean };
+      setName(c.name ?? "");
       setDescription(c.description || "");
       setStatus(c.status ? "1" : "0");
       setOldImage(c.imageUrl || null);
+      setIsAvailable(c.is_available === false ? "no" : "yes");
+      setAvailableText(c.available_text ?? "");
+      setIsPlatoon(c.is_platoon === false ? "no" : "yes");
     }
   }, [data]);
   
@@ -63,6 +69,9 @@ export default function EditEventCategory() {
       formData.append("name", name);
       formData.append("description", description);
       formData.append("status", status);
+      formData.append("is_available", isAvailable === "yes" ? "1" : "0");
+      formData.append("available_text", isAvailable === "no" ? availableText : "");
+      formData.append("is_platoon", isPlatoon === "yes" ? "1" : "0");
 
       if (image) {
         formData.append("image", image);
@@ -160,6 +169,81 @@ export default function EditEventCategory() {
 
                 {image && <p className="text-xs text-green-600 mt-2">{image.name}</p>}
               </label>
+            </div>
+
+            {/* Category Available */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Category Available
+              </label>
+              <div className="flex gap-6">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="categoryAvailable"
+                    value="yes"
+                    checked={isAvailable === "yes"}
+                    onChange={() => setIsAvailable("yes")}
+                    className="rounded-full border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Yes</span>
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="categoryAvailable"
+                    value="no"
+                    checked={isAvailable === "no"}
+                    onChange={() => setIsAvailable("no")}
+                    className="rounded-full border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">No</span>
+                </label>
+              </div>
+              {isAvailable === "no" && (
+                <div className="mt-3">
+                  <input
+                    type="text"
+                    placeholder="Enter a text"
+                    value={availableText}
+                    onChange={(e) => setAvailableText(e.target.value)}
+                    className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
+                      bg-transparent border-gray-300 focus:border-brand-300
+                      dark:bg-gray-900 dark:text-white dark:border-gray-700"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Applicable Platoon Number */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Applicable Platoon Number
+              </label>
+              <div className="flex gap-6">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="applicablePlatoon"
+                    value="yes"
+                    checked={isPlatoon === "yes"}
+                    onChange={() => setIsPlatoon("yes")}
+                    className="rounded-full border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Yes</span>
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="applicablePlatoon"
+                    value="no"
+                    checked={isPlatoon === "no"}
+                    onChange={() => setIsPlatoon("no")}
+                    className="rounded-full border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">No</span>
+                </label>
+              </div>
             </div>
 
             {/* Status */}

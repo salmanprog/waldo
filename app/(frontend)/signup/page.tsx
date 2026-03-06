@@ -30,10 +30,12 @@ export default function SignUpPage() {
     lname: "",
     email: "",
     mobileNumber: "",
+    categoryId: "",
     platoon: "",
     password: "",
     confirmPassword: "",
   });
+  const [categories, setCategories] = useState<{ id: number; name: string; slug: string; is_platoon?: boolean }[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMsg, setErrorMsg] = useState("");
@@ -66,7 +68,24 @@ export default function SignUpPage() {
     requiresAuth: false,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
+    url: "/api/users/events/category",
+    method: "GET",
+    type: "manual",
+    requiresAuth: false,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categoriesData && Array.isArray(categoriesData)) {
+      setCategories(categoriesData.map((c: { id: number; name: string; slug: string; is_platoon?: boolean }) => ({ id: c.id, name: c.name, slug: c.slug, is_platoon: c.is_platoon })));
+    }
+  }, [categoriesData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
 
     if (errors[e.target.name]) {
@@ -86,7 +105,8 @@ export default function SignUpPage() {
     }
 
     if (!form.mobileNumber.trim()) newErrors.mobileNumber = "Phone is required";
-    if (!form.platoon.trim()) newErrors.platoon = "Platoon is required";
+    const selectedCategory = categories.find((c) => String(c.id) === form.categoryId);
+    if (selectedCategory?.is_platoon === true && !form.platoon.trim()) newErrors.platoon = "Platoon is required";
 
     if (!form.password) newErrors.password = "Password is required";
     if (form.password.length < 6)
@@ -115,6 +135,7 @@ export default function SignUpPage() {
       fd.append("email", form.email);
       fd.append("lname", form.lname);
       fd.append("mobileNumber", form.mobileNumber);
+      if (form.categoryId) fd.append("categoryId", form.categoryId);
       fd.append("platoon", form.platoon);
       fd.append("password", form.password);
 
@@ -122,6 +143,7 @@ export default function SignUpPage() {
 
       if (res.code === 200) {
         setSuccessMsg("Thanks for registering! Please login with your credentials.");
+        setTimeout(() => router.push("/login"), 1500);
       }
 
       else if (res.code === 422) {
@@ -205,15 +227,43 @@ export default function SignUpPage() {
                   hint={errors.mobileNumber}
                 />
 
-                <Input
-                  name="platoon"
-                  type="text"
-                  placeholder="Platoon"
-                  value={form.platoon}
-                  onChange={handleChange}
-                  error={!!errors.platoon}
-                  hint={errors.platoon}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Category
+                  </label>
+                  <select
+                    name="categoryId"
+                    value={form.categoryId}
+                    onChange={handleChange}
+                    className="w-full h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs focus:border-brand-300 dark:bg-gray-900 dark:text-white dark:border-gray-700"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={String(cat.id)}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.categoryId && (
+                    <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
+                  )}
+                </div>
+
+                {(() => {
+                  const selectedCat = categories.find((c) => String(c.id) === form.categoryId);
+                  if (selectedCat?.is_platoon !== true) return null;
+                  return (
+                    <Input
+                      name="platoon"
+                      type="text"
+                      placeholder="Platoon"
+                      value={form.platoon}
+                      onChange={handleChange}
+                      error={!!errors.platoon}
+                      hint={errors.platoon}
+                    />
+                  );
+                })()}
 
                 <div className="relative">
                   <Input
@@ -250,13 +300,12 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Checkbox Groups */}
-                <div className="space-y-6">
+                {/* <div className="space-y-6">
                   <div>
                     <h2 className="text-1xl font-bold text-black mb-1">WHAT CLASS ARE YOU INTERESTED IN?</h2>
                     <p className="text-sm text-black">You can select as many classes as you wish, current, future or past. This is <strong>NOT</strong> required.</p>
                   </div>
 
-                  {/* Current and/or Future Class(es) */}
                   <div>
                     <label className="block text-sm font-medium text-black mb-3">Current and/or Future Class(es)</label>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -272,7 +321,6 @@ export default function SignUpPage() {
                     </div>
                   </div>
 
-                  {/* Prior USNA Class(es) */}
                   <div>
                     <label className="block text-sm font-medium text-black mb-3">Prior USNA Class(es)</label>
                     <div className="relative prior-classes-dropdown">
@@ -310,7 +358,7 @@ export default function SignUpPage() {
                       )}
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="text-[#000000] text-justify">
                   <p className="font-bold  mb-2 text-lg">PLEASE NOTE</p>

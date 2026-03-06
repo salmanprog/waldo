@@ -87,6 +87,7 @@ model User {
   profileType       ProfileType @default(PUBLIC)
   password          String      @db.VarChar(255)
   imageUrl          String?     @db.Text
+  categoryId        String?     @db.VarChar(250)
   platoon           String?     @db.VarChar(250)
   status            Boolean     @default(true)
   isEmailVerify     Boolean     @default(false)
@@ -117,6 +118,9 @@ model EventCategory {
   slug        String    @unique @db.VarChar(150)
   imageUrl    String?   @db.Text
   description String?   @db.Text
+  is_platoon  Boolean   @default(true)
+  is_available Boolean   @default(true)
+  available_text String  @db.VarChar(250)
   status      Boolean   @default(true)
   createdAt   DateTime  @default(now()) @db.Timestamp(6)
   updatedAt   DateTime  @updatedAt
