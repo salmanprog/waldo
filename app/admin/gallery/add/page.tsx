@@ -123,7 +123,7 @@ export default function AddGallery() {
 
           {/* Event Category */}
           <div>
-            <label className="block text-sm font-medium">Event Category</label>
+            <label className="block text-sm font-medium">Service Category</label>
             <select
                 value={eventCategoryId}
                 onChange={(e) => {
@@ -148,14 +148,14 @@ export default function AddGallery() {
 
           {/* Event (Optional) */}
           <div>
-            <label className="block text-sm font-medium">Event Package</label>
+            <label className="block text-sm font-medium">Service Package</label>
             <select
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}
               className="h-11 w-full rounded-lg border px-4"
               disabled={!eventCategoryId}
             >
-              <option value="">-- Select Event --</option>
+              <option value="">-- Select Service Package --</option>
               {eventList?.map((ev: any) => (
                 <option key={ev.id} value={ev.id}>
                   {ev.name}

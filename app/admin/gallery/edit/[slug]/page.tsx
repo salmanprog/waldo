@@ -163,7 +163,7 @@ export default function EditGallery() {
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium">Event Category</label>
+            <label className="text-sm font-medium">Service Category</label>
             <select
               className="h-11 w-full rounded border px-4"
               value={eventCategoryId}
@@ -189,13 +189,13 @@ export default function EditGallery() {
 
           {/* Event */}
           <div>
-            <label className="text-sm font-medium">Event Package</label>
+            <label className="text-sm font-medium">Service Package</label>
             <select
               className="h-11 w-full rounded border px-4"
               value={eventId}
               disabled
             >
-              <option value="">-- Select Event --</option>
+              <option value="">-- Select Service Package --</option>
               {eventList?.map((ev: any) => (
                 <option key={ev.id} value={ev.id}>
                   {ev.name}
