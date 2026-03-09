@@ -141,7 +141,7 @@ export default function Header() {
                         </li>
                         <li><Link className="primary-nav-link" href="/about-us">About Us</Link></li>
                         <li><Link className="primary-nav-link" href="/contact">Contact</Link></li>
-                        <li><Link className="primary-nav-link" href="/blog">Blog</Link></li>
+                        <li><Link className="primary-nav-link" href="/blog">Waldo News</Link></li>
                     </ul>
                     <Link href="/">
                         <Image src="/images/logo.png" alt="Logo" className="block md:hidden" width={100} height={100} />
@@ -163,6 +163,9 @@ export default function Header() {
                                 >
                                     Logout
                                 </button>
+                                <Link href="/coffe-table-book" className="relative p-2 text-white hover:text-[#061246] transition-colors">
+                                    <FaBook className="text-[32px]" />
+                                </Link>
                             </>
                         ) : (
                             <>
@@ -184,9 +187,7 @@ export default function Header() {
                                 </span>
                             )}
                         </Link>
-                        <Link href="/coffe-table-book" className="relative p-2 text-white hover:text-[#061246] transition-colors">
-                            <FaBook className="text-[32px]" />
-                        </Link>
+                        
                         <button className="menu-icon" onClick={toggleMenu}>
                             {isOpen ? <Icons.close className="text-[24px]" /> : <Icons.menu className="text-[24px]" />}
                         </button>
