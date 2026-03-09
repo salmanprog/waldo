@@ -47,7 +47,7 @@ export default function BlogPage() {
 
   return (
     <>
-      <InnerBanner bannerClass="blog-banner" title="Blog" />
+      <InnerBanner bannerClass="blog-banner" title="Waldo News" />
       <section className="blog-section sec-gap">
         <div className="container">
           {apiLoading ? (

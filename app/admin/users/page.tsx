@@ -15,6 +15,8 @@ interface User {
   email: string;
   imageUrl: string | null;
   platoon: string | null;
+  categoryId?: string | null;
+  categoryName?: string | null;
   role: {
     id: number;
     title: string;

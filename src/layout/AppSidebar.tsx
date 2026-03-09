@@ -53,11 +53,11 @@ const navItems: NavItem[] = [
   },
   {
     icon: Plug,
-    name: 'Events',
+    name: 'Services',
     subItems: [
-      { name: 'Event Category', path: '/admin/event-categories/', pro: false },
-      { name: 'Event Category FAQ', path: '/admin/event-category-faq/', pro: false },
-      { name: 'Events Packages', path: '/admin/event', pro: false },
+      { name: 'Services Category', path: '/admin/event-categories/', pro: false },
+      { name: 'Services Category FAQ', path: '/admin/event-category-faq/', pro: false },
+      { name: 'Services Packages', path: '/admin/event', pro: false },
     ],
   },
   {
@@ -69,7 +69,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: FolderOpen,
-    name: 'Events Gallery',
+    name: 'Services Gallery',
     subItems: [
       { name: 'Gallery', path: '/admin/gallery/', pro: false },
       { name: 'Gallery Platoon', path: '/admin/gallery-platoon/', pro: false },

@@ -30,7 +30,7 @@ export default function EventCategoryList() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Event Categories";
+    document.title = "Admin | Services Categories";
   }, []);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function EventCategoryList() {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Recent Event Categories
+            Recent Services Categories
           </h3>
         </div>
         <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function EventCategoryList() {
             See all
           </button>
           <Link href="/admin/event-categories/add">
-            <Button>Add Category</Button>
+            <Button>Add Services</Button>
             </Link>
         </div>
       </div>

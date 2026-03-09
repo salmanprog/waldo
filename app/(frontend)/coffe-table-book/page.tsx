@@ -188,7 +188,7 @@ export default function CoffeeTableBookPage() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-1">First Name *</label>
                   <Input
                     type="text"
@@ -248,7 +248,7 @@ export default function CoffeeTableBookPage() {
                     onChange={handleChange}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
 
                 {errors.images && (
                   <p className="text-xs text-red-500">{errors.images}</p>

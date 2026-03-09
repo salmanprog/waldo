@@ -18,7 +18,7 @@ export default function AboutPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 justify-between items-center gap-10">
                         <div className="flex flex-col gap-5 contact-con order-2 md:order-1">
                             <h3 className="hd-md flex items-center gap-2"><span><Icons.website className="text-[20px] contact-icon" /></span> <Link className="underline hover:text-[var(--secondary-theme-light)]" href="https://plebesummer.com">Plebesummer.com</Link></h3>
-                            <h3 className="hd-md flex items-center gap-2"><span><Icons.email className="text-[20px] contact-icon" /></span> <Link className="underline hover:text-[var(--secondary-theme-light)]" href="mailto:ThorntonStudios@comcats.net">ThorntonStudios@comcats.net</Link></h3>
+                            <h3 className="hd-md flex items-center gap-2"><span><Icons.email className="text-[20px] contact-icon" /></span> <Link className="underline hover:text-[var(--secondary-theme-light)]" href="mailto:ThorntonStudios@comcast.net">ThorntonStudios@comcast.net</Link></h3>
                             <h3 className="hd-md flex items-center gap-2">
                                 <span><Icons.phone className="text-[20px] contact-icon" /></span>
                                 <span className="flex-1">

@@ -173,7 +173,7 @@ export default function HomePage() {
       {categories.length > 0 ? (
         <section className="bg-white py-[50px]">
           <div className="container">
-            <h2 className="text-[40px] font-bold text-[#000000] text-center mb-10 uppercase">Products</h2>
+            <h2 className="text-[40px] font-bold text-[#000000] text-center mb-10 uppercase">Services</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {categories.map((category) => {
                 const unavailable = category.is_available === false;
