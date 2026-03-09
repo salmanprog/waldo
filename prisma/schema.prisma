@@ -120,7 +120,7 @@ model EventCategory {
   description String?   @db.Text
   is_platoon  Boolean   @default(true)
   is_available Boolean   @default(true)
-  available_text String  @db.VarChar(250)
+  available_text String @db.Text
   status      Boolean   @default(true)
   createdAt   DateTime  @default(now()) @db.Timestamp(6)
   updatedAt   DateTime  @updatedAt
