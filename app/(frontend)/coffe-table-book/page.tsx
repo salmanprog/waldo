@@ -6,6 +6,7 @@ import InnerBanner from "@/components/common/InnerBanner";
 import useApi, { ApiResponse } from "@/utils/useApi";
 import Input from "@/components/form/input/InputField";
 import Button from "@/components/ui/button/Button";
+import { useCurrentUser } from "@/utils/currentUser";
 
 interface FavouriteImage {
   id: number;
@@ -14,6 +15,8 @@ interface FavouriteImage {
 }
 
 export default function CoffeeTableBookPage() {
+  const { user: currentUser } = useCurrentUser();
+
   useEffect(() => {
     document.title = "My Waldo | Coffee Table Book";
   }, []);
@@ -45,6 +48,19 @@ export default function CoffeeTableBookPage() {
     address: "",
   });
 
+  useEffect(() => {
+    if (currentUser && typeof currentUser === "object") {
+      const u = currentUser as { name?: string | null; lname?: string | null; email?: string | null; mobileNumber?: string | null };
+      setForm((prev) => ({
+        ...prev,
+        firstName: u.name ?? prev.firstName,
+        lastName: u.lname ?? prev.lastName,
+        email: u.email ?? prev.email,
+        phone: u.mobileNumber ?? prev.phone,
+      }));
+    }
+  }, [currentUser]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -65,7 +81,6 @@ export default function CoffeeTableBookPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!form.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!form.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Invalid email format";
@@ -188,7 +203,7 @@ export default function CoffeeTableBookPage() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* <div>
+                <div style={{ display: 'none' }}>
                   <label className="block text-sm font-medium mb-1">First Name *</label>
                   <Input
                     type="text"
@@ -201,12 +216,12 @@ export default function CoffeeTableBookPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Last Name *</label>
+                <div style={{ display: 'none' }}>
+                  <label className="block text-sm font-medium mb-1">Last Name (optional)</label>
                   <Input
                     type="text"
                     name="lastName"
-                    placeholder="Enter your last name"
+                    placeholder="Enter your last name (optional)"
                     value={form.lastName}
                     onChange={handleChange}
                     error={!!errors.lastName}
@@ -214,7 +229,7 @@ export default function CoffeeTableBookPage() {
                   />
                 </div>
 
-                <div>
+                <div style={{ display: 'none' }}>
                   <label className="block text-sm font-medium mb-1">Email *</label>
                   <Input
                     type="email"
@@ -227,7 +242,7 @@ export default function CoffeeTableBookPage() {
                   />
                 </div>
 
-                <div>
+                <div style={{ display: 'none' }}>
                   <label className="block text-sm font-medium mb-1">Phone</label>
                   <Input
                     type="text"
@@ -238,7 +253,7 @@ export default function CoffeeTableBookPage() {
                   />
                 </div>
 
-                <div>
+                <div style={{ display: 'none' }}>
                   <label className="block text-sm font-medium mb-1">Address</label>
                   <textarea
                     name="address"
@@ -248,7 +263,7 @@ export default function CoffeeTableBookPage() {
                     onChange={handleChange}
                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div> */}
+                </div>
 
                 {errors.images && (
                   <p className="text-xs text-red-500">{errors.images}</p>

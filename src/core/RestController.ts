@@ -140,6 +140,8 @@ export default abstract class RestController<
             method: this.__request.method,
           }
         : {};
+      const currentUser = this.getCurrentUser();
+      if (currentUser) requestData.user = currentUser;
       query = await this.getQueryHook("index", query, requestData);
 
       const records = (await this.model.findMany(query)) as TEntity[];
@@ -201,6 +203,8 @@ export default abstract class RestController<
               method: this.__request.method,
             }
           : {};
+      const currentUserShow = this.getCurrentUser();
+      if (currentUserShow) requestDataShow.user = currentUserShow;
       query = await this.getQueryHook("show", query, requestDataShow);
       query.where = { ...(query.where || {}), id: Number(id) };
       const record = (await this.model.findUnique?.(query)) as TEntity | null;
