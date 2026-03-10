@@ -30,6 +30,7 @@ export default class AdminUserResource extends BaseResource<ExtendedUser> {
       lname: user.lname,
       email: user.email,
       mobileNumber: user.mobileNumber,
+      address: user.address ?? null,
       categoryId: user.categoryId,
       categoryName: categoryName,
       dob: user.dob,

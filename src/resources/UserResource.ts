@@ -5,6 +5,7 @@ import { User, UserRole, UserApiToken } from "@prisma/client";
 export type ExtendedUser = User & {
   userRole?: UserRole | null;
   apiTokens?: UserApiToken[];
+  address?: string | null;
 };
 
 export default class UserResource extends BaseResource<ExtendedUser> {
@@ -16,6 +17,7 @@ export default class UserResource extends BaseResource<ExtendedUser> {
       email: user.email,
       mobileNumber: user.mobileNumber,
       platoon: user.platoon,
+      address: user.address,
       imageUrl: user.imageUrl
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${user.imageUrl}`
         : null,

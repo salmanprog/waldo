@@ -35,7 +35,7 @@ export default function EventCategoryFaqList() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Event Category FAQs";
+    document.title = "Admin | Service Category FAQs";
   }, []);
 
   useEffect(() => {
@@ -93,11 +93,11 @@ export default function EventCategoryFaqList() {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Event Category FAQs
+            Service Category FAQs
           </h3>
         </div>
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
+          {/* <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             <svg
               className="stroke-current fill-white dark:fill-gray-800"
               width="20"
@@ -137,9 +137,9 @@ export default function EventCategoryFaqList() {
           </button>
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             See all
-          </button>
+          </button> */}
           <Link href="/admin/event-category-faq/add">
-            <Button>Add FAQ</Button>
+            <Button>Add Service Category FAQ</Button>
             </Link>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function EventCategoryFaqList() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Event Category
+                Service Category
               </TableCell>
               <TableCell
                 isHeader

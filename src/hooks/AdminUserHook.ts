@@ -16,13 +16,15 @@ export default class AdminUserHook {
     if (user && user.id) {
       query.where = { ...query.where, id: { not: Number(user.id) } };
     }
-    if (request && typeof request.q === "string") {
+    const q = request?.query && typeof request.query === "object" ? (request.query as Record<string, unknown>).q : request?.q;
+    if (typeof q === "string" && q.trim()) {
       query.where = {
         ...query.where,
-        name: {
-          contains: request.q,
-          mode: "insensitive",
-        } as Prisma.StringFilter,
+        OR: [
+          { name: { contains: q.trim() } },
+          { lname: { contains: q.trim() } },
+          { email: { contains: q.trim() } },
+        ],
       };
     }
 

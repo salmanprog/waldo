@@ -71,6 +71,7 @@ CREATE TABLE `User` (
     `profileType` ENUM('PUBLIC', 'PRIVATE') NOT NULL DEFAULT 'PUBLIC',
     `password` VARCHAR(255) NOT NULL,
     `imageUrl` TEXT NULL,
+    `address` TEXT NULL,
     `categoryId` VARCHAR(250) NULL,
     `platoon` VARCHAR(250) NULL,
     `status` BOOLEAN NOT NULL DEFAULT true,
@@ -101,7 +102,7 @@ CREATE TABLE `event_category` (
     `description` TEXT NULL,
     `is_platoon` BOOLEAN NOT NULL DEFAULT true,
     `is_available` BOOLEAN NOT NULL DEFAULT true,
-    `available_text` VARCHAR(250) NOT NULL,
+    `available_text` TEXT NOT NULL,
     `status` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -150,6 +151,22 @@ CREATE TABLE `event_category_faqs` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `blog_category` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `title` VARCHAR(255) NOT NULL,
+    `slug` VARCHAR(255) NOT NULL,
+    `description` TEXT NULL,
+    `imageUrl` TEXT NULL,
+    `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `deletedAt` TIMESTAMP(6) NULL,
+
+    UNIQUE INDEX `blog_category_slug_key`(`slug`),
+    INDEX `blog_category_title_idx`(`title`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `blog` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(255) NOT NULL,
@@ -159,12 +176,14 @@ CREATE TABLE `blog` (
     `seoTitle` VARCHAR(255) NULL,
     `seoDescription` TEXT NULL,
     `status` BOOLEAN NOT NULL DEFAULT true,
+    `blog_category_id` INTEGER NULL,
     `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updatedAt` DATETIME(3) NOT NULL,
     `deletedAt` TIMESTAMP(6) NULL,
 
     UNIQUE INDEX `blog_slug_key`(`slug`),
     INDEX `blog_title_idx`(`title`),
+    INDEX `blog_blog_category_id_idx`(`blog_category_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -327,6 +346,9 @@ ALTER TABLE `Event` ADD CONSTRAINT `Event_categoryId_fkey` FOREIGN KEY (`categor
 
 -- AddForeignKey
 ALTER TABLE `event_category_faqs` ADD CONSTRAINT `event_category_faqs_eventCategoryId_fkey` FOREIGN KEY (`eventCategoryId`) REFERENCES `event_category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `blog` ADD CONSTRAINT `blog_blog_category_id_fkey` FOREIGN KEY (`blog_category_id`) REFERENCES `blog_category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

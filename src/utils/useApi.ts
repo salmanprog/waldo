@@ -48,8 +48,9 @@ export default function useApi(options: UseApiOptions) {
     return query.toString() ? `?${query.toString()}` : "";
   };
 
-  const buildUrl = () => {
-    const query = buildQuery(queryParams);
+  const buildUrl = (overrideParams?: Record<string, any>) => {
+    const params = overrideParams ? { ...queryParams, ...overrideParams } : queryParams;
+    const query = buildQuery(params);
     const finalSlug = slug ? `/${slug}` : "";
     return `${baseUrl}${url}${finalSlug}${query}`;
   };
@@ -62,7 +63,7 @@ export default function useApi(options: UseApiOptions) {
   };
 
   // Generic request function
-  const request = async <T = any>(customMethod: string, payload?: any): Promise<T> => {
+  const request = async <T = any>(customMethod: string, payload?: any, overrideQueryParams?: Record<string, any>): Promise<T> => {
     setLoading(true);
     setError(null);
 
@@ -84,7 +85,7 @@ export default function useApi(options: UseApiOptions) {
         headers["Content-Type"] = "application/json";
       }
 
-      const res = await fetch(buildUrl(), {
+      const res = await fetch(buildUrl(overrideQueryParams), {
         method: customMethod,
         headers,
         body,
@@ -114,8 +115,8 @@ export default function useApi(options: UseApiOptions) {
     }
   };
 
-  // Manual fetch
-  const fetchApi = async () => request(method);
+  // Manual fetch; pass optional params to use for this request (e.g. { q: "search" })
+  const fetchApi = async (overrideParams?: Record<string, any>) => request(method, undefined, overrideParams);
 
   // Send data (POST, PATCH, PUT)
   const sendData = async <T = any>(

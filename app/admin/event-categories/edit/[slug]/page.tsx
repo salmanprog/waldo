@@ -13,7 +13,7 @@ export default function EditEventCategory() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Edit Event Category";
+    document.title = "Admin | Edit Service Category";
   }, []);
 
   const [name, setName] = useState("");
@@ -95,7 +95,7 @@ export default function EditEventCategory() {
       {/* Header */}
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Edit Event Category
+          Edit Service Category
         </h2>
       </div>
 
@@ -110,7 +110,7 @@ export default function EditEventCategory() {
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Category Details
+            Service Category Details
           </h3>
         </div>
 

@@ -9,7 +9,7 @@ export default function AddEventCategoryFaq() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Add Event Category FAQ";
+    document.title = "Admin | Add Service Category FAQ";
   }, []);
 
   const [question, setQuestion] = useState("");
@@ -70,7 +70,7 @@ export default function AddEventCategoryFaq() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Add Event Category FAQ
+          Add Service Category FAQ
         </h2>
 
         <nav>
@@ -90,7 +90,7 @@ export default function AddEventCategoryFaq() {
               </a>
             </li>
 
-            <li className="text-sm text-gray-800 dark:text-white/90">Add FAQ</li>
+            <li className="text-sm text-gray-800 dark:text-white/90">Add Service Category FAQ</li>
           </ol>
         </nav>
       </div>
@@ -116,7 +116,7 @@ export default function AddEventCategoryFaq() {
             {/* Event Category Dropdown */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Event Category
+                Service Category
               </label>
               <select
                 value={eventCategoryId}
@@ -125,7 +125,7 @@ export default function AddEventCategoryFaq() {
                 bg-transparent border-gray-300 focus:border-brand-300
                 dark:bg-gray-900 dark:text-white dark:border-gray-700"
               >
-                <option value="">-- Select Event Category --</option>
+                <option value="">-- Select Service Category --</option>
 
                 {/* dynamic categories */}
                 {categoryList?.map((cat: any) => (
@@ -188,7 +188,7 @@ export default function AddEventCategoryFaq() {
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
               <Button type="submit" loading={loading}>
-                Save FAQ
+                Save Service Category FAQ
               </Button>
             </div>
 

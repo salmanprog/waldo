@@ -12,7 +12,7 @@ export default function EditBlog() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Edit Blog";
+    document.title = "Admin | Edit Waldo News";
   }, []);
 
   const [title, setTitle] = useState("");
@@ -22,7 +22,32 @@ export default function EditBlog() {
   const [image, setImage] = useState<File | null>(null);
   const [oldImage, setOldImage] = useState<string | null>(null);
   const [status, setStatus] = useState("1");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
+    url: "/api/admin/blog-category",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categoriesData && Array.isArray(categoriesData)) {
+      setCategories(
+        categoriesData.map((c: { id: number; title: string; slug: string }) => ({
+          id: c.id,
+          title: c.title,
+          slug: c.slug,
+        }))
+      );
+    }
+  }, [categoriesData]);
 
   // Fetch single blog
   const { data: blogData, fetchApi: fetchBlog } = useApi({
@@ -53,6 +78,7 @@ export default function EditBlog() {
       setSeoDescription(blogData.seoDescription || "");
       setStatus(blogData.status ? "1" : "0");
       setOldImage(blogData.imageUrl || null);
+      setCategoryId(blogData.blogCategoryId != null ? String(blogData.blogCategoryId) : "");
     }
   }, [blogData]);
 
@@ -69,6 +95,7 @@ export default function EditBlog() {
       formData.append("seoTitle", seoTitle);
       formData.append("seoDescription", seoDescription);
       formData.append("status", status);
+      formData.append("blogCategoryId", categoryId);
 
       if (image) {
         formData.append("image", image);
@@ -91,7 +118,7 @@ export default function EditBlog() {
 
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Edit Blog
+          Edit Waldo News
         </h2>
       </div>
 
@@ -104,7 +131,7 @@ export default function EditBlog() {
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Blog Details
+            Waldo News Details
           </h3>
         </div>
 
@@ -113,13 +140,34 @@ export default function EditBlog() {
 
             {/* Title */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Blog Title <span className="text-red-500">*</span></label>
+              <label className="block mb-1 text-sm font-medium">Waldo News Title <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
+                Category
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
+                bg-transparent border-gray-300 focus:border-brand-300
+                dark:bg-gray-900 dark:text-white dark:border-gray-700"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={String(cat.id)}>
+                    {cat.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Description */}
@@ -159,7 +207,7 @@ export default function EditBlog() {
 
             {/* Image */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Blog Image</label>
+              <label className="block mb-1 text-sm font-medium">Waldo News Image</label>
 
               {oldImage && !image && (
                 <div className="mb-4">
@@ -217,7 +265,7 @@ export default function EditBlog() {
                 Cancel
               </Button>
               <Button type="submit" loading={loading}>
-                Update Blog
+                Update Waldo News
               </Button>
             </div>
 

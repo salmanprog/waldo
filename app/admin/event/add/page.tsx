@@ -10,7 +10,7 @@ export default function AddEvent() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Add Event";
+    document.title = "Admin | Add Service";
   }, []);
 
   const [title, setTitle] = useState("");
@@ -79,7 +79,7 @@ export default function AddEvent() {
       {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Add Event
+          Add Service Package
         </h2>
       </div>
 
@@ -94,10 +94,10 @@ export default function AddEvent() {
 
           {/* Event Title */}
           <div>
-            <label className="block text-sm font-medium">Event Title</label>
+            <label className="block text-sm font-medium">Service Package Title</label>
             <input
               type="text"
-              placeholder="Enter event title"
+              placeholder="Enter service package title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="h-11 w-full rounded-lg border px-4"
@@ -106,7 +106,7 @@ export default function AddEvent() {
 
           {/* Category Dropdown */}
           <div>
-            <label className="block text-sm font-medium">Event Category</label>
+            <label className="block text-sm font-medium">Service Category</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -125,10 +125,10 @@ export default function AddEvent() {
 
           {/* Event Price */}
           <div>
-            <label className="block text-sm font-medium">Event Price</label>
+            <label className="block text-sm font-medium">Service Package Price</label>
             <input
               type="text"
-              placeholder="Enter event price"
+              placeholder="Enter service package price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="h-11 w-full rounded-lg border px-4"
@@ -148,7 +148,7 @@ export default function AddEvent() {
 
           {/* Image */}
           {/* <div>
-            <label className="block text-sm font-medium">Event Image</label>
+            <label className="block text-sm font-medium">Service Package Image</label>
             <label className="border-2 border-dashed p-6 rounded-lg block text-center cursor-pointer">
               <input
                 type="file"
@@ -235,7 +235,7 @@ export default function AddEvent() {
           <div className="flex justify-end gap-3">
             <Button variant="outline">Cancel</Button>
             <Button type="submit" loading={loading}>
-              Save Event
+              Save Service Package
             </Button>
           </div>
 

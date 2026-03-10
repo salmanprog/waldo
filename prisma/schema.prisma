@@ -87,6 +87,7 @@ model User {
   profileType       ProfileType @default(PUBLIC)
   password          String      @db.VarChar(255)
   imageUrl          String?     @db.Text
+  address           String?     @db.Text
   categoryId        String?     @db.VarChar(250)
   platoon           String?     @db.VarChar(250)
   status            Boolean     @default(true)
@@ -170,20 +171,40 @@ model EventCategoryFaq {
   @@map("event_category_faqs")
 }
 
-model Blog {
-  id            Int       @id @default(autoincrement())
-  title         String    @db.VarChar(255)
-  slug          String    @unique @db.VarChar(255)
-  description   String?   @db.Text
-  imageUrl      String?   @db.Text
-  seoTitle      String?   @db.VarChar(255)
-  seoDescription String?  @db.Text
-  status        Boolean   @default(true)
-  createdAt     DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime? @db.Timestamp(6)
+model BlogCategory {
+  id          Int     @id @default(autoincrement())
+  title       String  @db.VarChar(255)
+  slug        String  @unique @db.VarChar(255)
+  description String? @db.Text
+  imageUrl    String? @db.Text
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime? @db.Timestamp(6)
+
+  blogs Blog[]
 
   @@index([title])
+  @@map("blog_category")
+}
+
+model Blog {
+  id               Int          @id @default(autoincrement())
+  title            String       @db.VarChar(255)
+  slug             String       @unique @db.VarChar(255)
+  description      String?      @db.Text
+  imageUrl         String?      @db.Text
+  seoTitle         String?      @db.VarChar(255)
+  seoDescription   String?      @db.Text
+  status           Boolean      @default(true)
+  blogCategoryId   Int?         @map("blog_category_id")
+  createdAt        DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?   @db.Timestamp(6)
+
+  blogCategory BlogCategory? @relation(fields: [blogCategoryId], references: [id], onDelete: SetNull)
+
+  @@index([title])
+  @@index([blogCategoryId])
   @@map("blog")
 }
 

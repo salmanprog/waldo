@@ -54,6 +54,12 @@ export default class AdminBlogController extends RestController<
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
     }
+    const data = this.data as Record<string, unknown>;
+    if (data.blogCategoryId !== undefined && data.blogCategoryId !== "") {
+      data.blogCategoryId = parseInt(String(data.blogCategoryId), 10);
+    } else if (data.blogCategoryId === "") {
+      data.blogCategoryId = null;
+    }
   }
 
   protected async afterStore(record: ExtendedBlog): Promise<ExtendedBlog> {
@@ -63,6 +69,12 @@ export default class AdminBlogController extends RestController<
   protected async beforeUpdate(): Promise<void | NextResponse> {
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
+    }
+    const data = this.data as Record<string, unknown>;
+    if (data.blogCategoryId !== undefined && data.blogCategoryId !== "") {
+      data.blogCategoryId = parseInt(String(data.blogCategoryId), 10);
+    } else if (data.blogCategoryId === "") {
+      data.blogCategoryId = null;
     }
   }
 

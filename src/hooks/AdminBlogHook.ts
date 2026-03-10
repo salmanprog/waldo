@@ -13,6 +13,13 @@ export default class AdminBlogHook {
     if (!user || user.userGroupId !== 1) {
       query.where = { ...query.where, status: true };
     }
+    const reqQuery = request?.query as Record<string, string> | undefined;
+    if (reqQuery?.blogCategoryId) {
+      const categoryId = parseInt(String(reqQuery.blogCategoryId), 10);
+      if (!isNaN(categoryId)) {
+        query.where = { ...query.where, blogCategoryId: categoryId };
+      }
+    }
     query.orderBy = {
       createdAt: "desc",
     };

@@ -11,7 +11,7 @@ export default function EditEventCategoryFaq() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Edit Event Category FAQ";
+    document.title = "Admin | Edit Service Category FAQ";
   }, []);
 
   const [question, setQuestion] = useState("");
@@ -91,7 +91,7 @@ export default function EditEventCategoryFaq() {
 
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Edit Event Category FAQ
+          Edit Service Category FAQ
         </h2>
       </div>
 
@@ -104,7 +104,7 @@ export default function EditEventCategoryFaq() {
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            FAQ Details
+            Service Category FAQ Details
           </h3>
         </div>
 
@@ -113,13 +113,13 @@ export default function EditEventCategoryFaq() {
 
             {/* Event Category Dropdown */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Event Category</label>
+              <label className="block mb-1 text-sm font-medium">Service Category</label>
               <select
                 value={eventCategoryId}
                 onChange={(e) => setEventCategoryId(e.target.value)}
                 className="h-11 w-full rounded-lg border px-4"
               >
-                <option value="">-- Select Event Category --</option>
+                <option value="">-- Select Service Category --</option>
                 {categoryList?.map((cat: any) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -169,7 +169,7 @@ export default function EditEventCategoryFaq() {
                 Cancel
               </Button>
               <Button type="submit" loading={loading}>
-                Update FAQ
+                Update Service Category FAQ
               </Button>
             </div>
 

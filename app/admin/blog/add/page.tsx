@@ -9,7 +9,7 @@ export default function AddBlog() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Add Blog";
+    document.title = "Admin | Add Waldo News";
   }, []);
 
   const [title, setTitle] = useState("");
@@ -18,7 +18,32 @@ export default function AddBlog() {
   const [seoDescription, setSeoDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [status, setStatus] = useState("1");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
+    url: "/api/admin/blog-category",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categoriesData && Array.isArray(categoriesData)) {
+      setCategories(
+        categoriesData.map((c: { id: number; title: string; slug: string }) => ({
+          id: c.id,
+          title: c.title,
+          slug: c.slug,
+        }))
+      );
+    }
+  }, [categoriesData]);
 
   // Submit Blog API
   const { sendData, loading } = useApi({
@@ -40,6 +65,7 @@ export default function AddBlog() {
       formData.append("seoTitle", seoTitle);
       formData.append("seoDescription", seoDescription);
       formData.append("status", status);
+      if (categoryId) formData.append("blogCategoryId", categoryId);
       if (image) formData.append("image", image);
 
       const res = await sendData(formData, undefined, "POST");
@@ -60,7 +86,7 @@ export default function AddBlog() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Add Blog
+          Add Waldo News
         </h2>
 
         <nav>
@@ -80,7 +106,7 @@ export default function AddBlog() {
               </a>
             </li>
 
-            <li className="text-sm text-gray-800 dark:text-white/90">Add Blog</li>
+            <li className="text-sm text-gray-800 dark:text-white/90">Add Waldo News</li>
           </ol>
         </nav>
       </div>
@@ -96,7 +122,7 @@ export default function AddBlog() {
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <h2 className="text-lg font-medium text-gray-800 dark:text-white">
-            Blog Details
+            Waldo News Details
           </h2>
         </div>
 
@@ -106,17 +132,38 @@ export default function AddBlog() {
             {/* Blog Title */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Blog Title <span className="text-red-500">*</span>
+                Waldo News Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="Enter blog title"
+                placeholder="Enter Waldo news title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
                 bg-transparent border-gray-300 focus:border-brand-300
                 dark:bg-gray-900 dark:text-white dark:border-gray-700"
               />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Category
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
+                bg-transparent border-gray-300 focus:border-brand-300
+                dark:bg-gray-900 dark:text-white dark:border-gray-700"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={String(cat.id)}>
+                    {cat.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Description */}
@@ -170,7 +217,7 @@ export default function AddBlog() {
             {/* Image Upload */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Blog Image
+                Waldo News Image
               </label>
 
               <label className="group block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-800 p-6 text-center">
@@ -218,7 +265,7 @@ export default function AddBlog() {
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
               <Button type="submit" loading={loading}>
-                Save Blog
+                Save Waldo News
               </Button>
             </div>
 

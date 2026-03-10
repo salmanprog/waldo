@@ -30,6 +30,7 @@ export default function SignUpPage() {
     lname: "",
     email: "",
     mobileNumber: "",
+    address: "",
     categoryId: "",
     platoon: "",
     password: "",
@@ -135,6 +136,7 @@ export default function SignUpPage() {
       fd.append("email", form.email);
       fd.append("lname", form.lname);
       fd.append("mobileNumber", form.mobileNumber);
+      fd.append("address", form.address);
       if (form.categoryId) fd.append("categoryId", form.categoryId);
       fd.append("platoon", form.platoon);
       fd.append("password", form.password);
@@ -225,6 +227,16 @@ export default function SignUpPage() {
                   onChange={handleChange}
                   error={!!errors.mobileNumber}
                   hint={errors.mobileNumber}
+                />
+
+                <Input
+                  name="address"
+                  type="text"
+                  placeholder="Address"
+                  value={form.address}
+                  onChange={handleChange}
+                  error={!!errors.address}
+                  hint={errors.address}
                 />
 
                 <div>

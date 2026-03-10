@@ -9,7 +9,7 @@ export default function AddEventCategory() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Add Event Category";
+    document.title = "Admin | Add Service Category";
   }, []);
 
   const [name, setName] = useState("");
@@ -65,7 +65,7 @@ export default function AddEventCategory() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
-          Add Event Category
+          Add Service Category
         </h2>
 
         <nav>
@@ -85,7 +85,7 @@ export default function AddEventCategory() {
               </a>
             </li>
 
-            <li className="text-sm text-gray-800 dark:text-white/90">Add Category</li>
+            <li className="text-sm text-gray-800 dark:text-white/90">Add Service Category</li>
           </ol>
         </nav>
       </div>

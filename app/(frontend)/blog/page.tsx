@@ -18,25 +18,56 @@ interface Blog {
   createdAt: string;
 }
 
+interface BlogCategory {
+  id: number;
+  title: string;
+  slug: string;
+}
+
 export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
 
   // Set page title
   useEffect(() => {
     document.title = "My Waldo | Blog";
   }, []);
 
-  const { data, loading: apiLoading, error: apiError, fetchApi } = useApi({
+  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
+    url: "/api/users/blog-category",
+    type: "manual",
+    method: "GET",
+    requiresAuth: false,
+  });
+
+  const { data, loading: apiLoading, error: apiError, fetchApi: fetchBlogs } = useApi({
     url: "/api/users/blog",
     type: "manual",
     method: "GET",
     requiresAuth: false,
   });
 
-  // Fetch blogs on mount
   useEffect(() => {
-    fetchApi();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (categoriesData && Array.isArray(categoriesData)) {
+      setCategories(
+        categoriesData.map((c: { id: number; title: string; slug: string }) => ({
+          id: c.id,
+          title: c.title,
+          slug: c.slug,
+        }))
+      );
+    }
+  }, [categoriesData]);
+
+  // Fetch blogs (with optional category filter)
+  useEffect(() => {
+    fetchBlogs(selectedCategoryId ? { blogCategoryId: selectedCategoryId } : undefined);
+  }, [selectedCategoryId]);
 
   // Update blogs when data is received
   useEffect(() => {
@@ -50,6 +81,27 @@ export default function BlogPage() {
       <InnerBanner bannerClass="blog-banner" title="Waldo News" />
       <section className="blog-section sec-gap">
         <div className="container">
+          {/* Category filter */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setSelectedCategoryId("")}
+              className={selectedCategoryId === "" ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategoryId(String(cat.id))}
+                className={selectedCategoryId === String(cat.id) ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
+              >
+                {cat.title}
+              </button>
+            ))}
+          </div>
+
           {apiLoading ? (
             <div className="text-center py-8 loading-text">Loading blogs...</div>
           ) : apiError ? (

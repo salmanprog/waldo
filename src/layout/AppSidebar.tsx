@@ -77,9 +77,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: 'Blogs',
+    name: 'Waldo News',
     icon: FileText,
-    subItems: [{ name: 'Blogs', path: '/admin/blog/', pro: false }],
+    subItems: [
+      { name: 'Waldo News Categories', path: '/admin/blog-category/', pro: false },
+      { name: 'Waldo News', path: '/admin/blog/', pro: false }
+    ],
   },
   // {
   //   name: 'Forms',

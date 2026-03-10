@@ -34,7 +34,7 @@ export default function BlogList() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Blogs";
+    document.title = "Admin | Waldo News";
   }, []);
 
   useEffect(() => {
@@ -92,11 +92,11 @@ export default function BlogList() {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Blogs
+            Waldo News
           </h3>
         </div>
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
+          {/* <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             <svg
               className="stroke-current fill-white dark:fill-gray-800"
               width="20"
@@ -136,9 +136,9 @@ export default function BlogList() {
           </button>
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             See all
-          </button>
+          </button> */}
           <Link href="/admin/blog/add">
-            <Button>Add Blog</Button>
+            <Button>Add Waldo News</Button>
             </Link>
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function BlogList() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={8} className="py-8 text-center text-gray-500">
-                  Loading blogs...
+                  Loading Waldo News...
                 </TableCell>
               </TableRow>
             ) : blogs.length > 0 ? (
@@ -258,7 +258,7 @@ export default function BlogList() {
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="py-8 text-center text-gray-500">
-                  No blogs found.
+                  No Waldo News found.
                 </TableCell>
               </TableRow>
             )}
