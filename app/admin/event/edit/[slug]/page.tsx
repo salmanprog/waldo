@@ -11,7 +11,7 @@ export default function EditEvent() {
 
   // Set page title
   useEffect(() => {
-    document.title = "Admin | Edit Event";
+    document.title = "Admin | Edit Service";
   }, []);
 
   const [title, setTitle] = useState("");
@@ -73,9 +73,9 @@ export default function EditEvent() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!title) return setErrorMsg("Event title is required.");
+    if (!title) return setErrorMsg("Service title is required.");
     if (!categoryId) return setErrorMsg("Category is required.");
-    if (!price) return setErrorMsg("Event price is required.");
+    if (!price) return setErrorMsg("Service price is required.");
 
     try {
       const formData = new FormData();
@@ -93,7 +93,7 @@ export default function EditEvent() {
 
       if (res.code === 200) {
         //router.push(`/admin/event/edit/${slug}`);
-        setSuccessMsg("Event updated successfully!");
+        setSuccessMsg("Service updated successfully!");
       } else {
         setErrorMsg(res.message || "Something went wrong.");
       }
@@ -107,7 +107,7 @@ export default function EditEvent() {
 
       <div className="flex justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Edit Event
+          Edit Service
         </h2>
       </div>
       {successMsg && (
@@ -124,7 +124,7 @@ export default function EditEvent() {
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Event Details
+            Service Details
           </h3>
         </div>
 
@@ -133,7 +133,7 @@ export default function EditEvent() {
 
             {/* Title */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Event Title</label>
+              <label className="block mb-1 text-sm font-medium">Service Title</label>
               <input
                 type="text"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
@@ -144,7 +144,7 @@ export default function EditEvent() {
 
             {/* Category Dropdown */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Event Category</label>
+              <label className="block mb-1 text-sm font-medium">Service Category</label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -161,7 +161,7 @@ export default function EditEvent() {
 
             {/* Price */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Event Price</label>
+              <label className="block mb-1 text-sm font-medium">Service Price</label>
               <input
                 type="text"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
@@ -183,7 +183,7 @@ export default function EditEvent() {
 
             {/* Image */}
             {/* <div>
-              <label className="block mb-1 text-sm font-medium">Event Image</label>
+              <label className="block mb-1 text-sm font-medium">Service Image</label>
 
               {oldImage && !image && (
                 <img
@@ -279,7 +279,7 @@ export default function EditEvent() {
                 Cancel
               </Button>
               <Button type="submit" loading={loading}>
-                Update Event
+                Update Service
               </Button>
             </div>
 
