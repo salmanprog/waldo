@@ -188,6 +188,23 @@ CREATE TABLE `blog` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `company` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `slug` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `imageUrl` TEXT NULL,
+    `description` TEXT NULL,
+    `status` BOOLEAN NOT NULL DEFAULT true,
+    `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `deletedAt` TIMESTAMP(6) NULL,
+
+    UNIQUE INDEX `company_slug_key`(`slug`),
+    INDEX `company_name_idx`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `media` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(255) NULL,
@@ -265,6 +282,17 @@ CREATE TABLE `gallery_platoon` (
     `platoonNumber` INTEGER NOT NULL,
 
     INDEX `gallery_platoon_galleryId_idx`(`galleryId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `gallery_company` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `galleryId` INTEGER NOT NULL,
+    `companyId` INTEGER NOT NULL,
+
+    INDEX `gallery_company_galleryId_idx`(`galleryId`),
+    INDEX `gallery_company_companyId_idx`(`companyId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -364,6 +392,12 @@ ALTER TABLE `gallery` ADD CONSTRAINT `gallery_eventId_fkey` FOREIGN KEY (`eventI
 
 -- AddForeignKey
 ALTER TABLE `gallery_platoon` ADD CONSTRAINT `gallery_platoon_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `gallery_company` ADD CONSTRAINT `gallery_company_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `gallery_company` ADD CONSTRAINT `gallery_company_companyId_fkey` FOREIGN KEY (`companyId`) REFERENCES `company`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `gallery_items` ADD CONSTRAINT `gallery_items_galleryId_fkey` FOREIGN KEY (`galleryId`) REFERENCES `gallery`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

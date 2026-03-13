@@ -208,6 +208,23 @@ model Blog {
   @@map("blog")
 }
 
+model Company {
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique @db.VarChar(255)
+  name        String  @db.VarChar(255)
+  imageUrl    String? @db.Text
+  description String? @db.Text
+  status           Boolean      @default(true)
+  createdAt        DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?   @db.Timestamp(6)
+
+  galleryCompanies GalleryCompany[]
+
+  @@index([name])
+  @@map("company")
+}
+
 model Media {
   id          Int       @id @default(autoincrement())
   title       String?   @db.VarChar(255)
@@ -276,6 +293,7 @@ model Gallery {
   event           Event?         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   items           GalleryItem[]
   platoons        GalleryPlatoon[]
+  companies       GalleryCompany[]
   @@index([eventCategoryId])
   @@index([eventId])
   @@map("gallery")
@@ -291,6 +309,20 @@ model GalleryPlatoon {
 
   @@index([galleryId])
   @@map("gallery_platoon")
+}
+
+model GalleryCompany {
+  id         Int @id @default(autoincrement())
+  galleryId  Int
+  companyId  Int
+
+  // Relations
+  gallery    Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([galleryId])
+  @@index([companyId])
+  @@map("gallery_company")
 }
 
 model GalleryItem {

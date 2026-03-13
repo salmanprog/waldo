@@ -52,6 +52,13 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    icon: FolderOpen,
+    name: 'Companies',
+    subItems: [
+      { name: 'Companies', path: '/admin/companies/', pro: false },
+    ],
+  },
+  {
     icon: Plug,
     name: 'Services',
     subItems: [

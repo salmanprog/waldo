@@ -68,9 +68,24 @@ export default class AdminGalleryController extends RestController<
     if (this.data?.is_coff_book !== undefined && this.data?.is_coff_book !== null) {
       this.data.is_coff_book = String(this.data.is_coff_book) === "1";
     }
+    const companyIds = (this.data as Record<string, unknown>).companyIds;
+    if (Array.isArray(companyIds) && companyIds.length > 0) {
+      (this as unknown as { _companyIdsToLink: string[] })._companyIdsToLink = companyIds.map(String);
+      delete (this.data as Record<string, unknown>).companyIds;
+    }
   }
 
   protected async afterStore(record: ExtendedGallery): Promise<ExtendedGallery> {
+    const companyIdsToLink = (this as unknown as { _companyIdsToLink?: string[] })._companyIdsToLink;
+    if (Array.isArray(companyIdsToLink) && companyIdsToLink.length > 0 && record?.id) {
+      await prisma.galleryCompany.createMany({
+        data: companyIdsToLink.map((id) => ({
+          galleryId: record.id,
+          companyId: parseInt(id, 10),
+        })),
+        skipDuplicates: true,
+      });
+    }
     return record;
   }
 
@@ -91,9 +106,27 @@ export default class AdminGalleryController extends RestController<
     if (this.data?.is_coff_book !== undefined && this.data?.is_coff_book !== null) {
       this.data.is_coff_book = String(this.data.is_coff_book) === "1";
     }
+    const companyIds = (this.data as Record<string, unknown>).companyIds;
+    if (Array.isArray(companyIds) && companyIds.length > 0) {
+      (this as unknown as { _companyIdsToLink: string[] })._companyIdsToLink = companyIds.map(String);
+      delete (this.data as Record<string, unknown>).companyIds;
+    }
   }
 
   protected async afterUpdate(record: ExtendedGallery): Promise<ExtendedGallery> {
+    const companyIdsToLink = (this as unknown as { _companyIdsToLink?: string[] })._companyIdsToLink;
+    if (Array.isArray(companyIdsToLink) && record?.id) {
+      await prisma.galleryCompany.deleteMany({ where: { galleryId: record.id } });
+      if (companyIdsToLink.length > 0) {
+        await prisma.galleryCompany.createMany({
+          data: companyIdsToLink.map((id) => ({
+            galleryId: record.id as number,
+            companyId: parseInt(id, 10),
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
     return record;
   }
 

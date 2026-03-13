@@ -24,6 +24,7 @@ export default function AddGallery() {
   const [is_coff_book, setIs_coff_book] = useState<"1" | "0">("0");
   const [errorMsg, setErrorMsg] = useState("");
   const [eventCategorySlug, setEventCategorySlug] = useState("");
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
   // Load event categories
   const { data: categoryList, fetchApi: fetchCategories } = useApi({
@@ -42,7 +43,14 @@ export default function AddGallery() {
     type: "manual",
     requiresAuth: true,
   });
-  
+
+  // Load companies (for multi-select)
+  const { data: companyList, fetchApi: fetchCompanies } = useApi({
+    url: "/api/admin/companies",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
 
   // Submit Gallery API
   const { sendData, loading } = useApi({
@@ -59,12 +67,23 @@ export default function AddGallery() {
     if (eventCategoryId) fetchEvents();
   }, [eventCategoryId]);
 
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const toggleCompany = (id: string) => {
+    setSelectedCompanyIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
+
   const submitGallery = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
     if (!title) return setErrorMsg("Gallery title is required.");
     if (!eventCategoryId) return setErrorMsg("Please select an event category.");
+    if (selectedCompanyIds.length < 1) return setErrorMsg("Please select at least one company.");
     if (!image) return setErrorMsg("Gallery cover image is required.");
 
     try {
@@ -72,6 +91,7 @@ export default function AddGallery() {
       formData.append("title", title);
       formData.append("eventCategoryId", eventCategoryId);
       if (eventId) formData.append("eventId", eventId);
+      selectedCompanyIds.forEach((id) => formData.append("companyIds", id));
       formData.append("description", description);
       formData.append("is_face_recognition", is_face_recognition);
       if (is_face_recognition === "1") formData.append("face_recognition_heading", face_recognition_heading);
@@ -162,6 +182,33 @@ export default function AddGallery() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Companies (multiple) */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Companies <span className="text-red-500">*</span>
+            </label>
+            <div className="max-h-40 overflow-y-auto rounded-lg border px-4 py-2 space-y-2">
+              {companyList?.length ? (
+                companyList.map((company: { id: number; name: string }) => (
+                  <label
+                    key={company.id}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 py-1.5 px-2 rounded"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCompanyIds.includes(String(company.id))}
+                      onChange={() => toggleCompany(String(company.id))}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm">{company.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 py-2">No companies available.</p>
+              )}
+            </div>
           </div>
 
           {/* Description */}

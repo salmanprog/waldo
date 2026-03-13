@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import Button from "@/components/ui/button/Button";
@@ -22,8 +22,12 @@ interface EventCategoryFaq {
   } | null;
 }
 
+const PER_PAGE = 10;
+
 export default function EventCategoryFaqList() {
   const [faqs, setFaqs] = useState<EventCategoryFaq[]>([]);
+  const [questionSearchQuery, setQuestionSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const deleteModal = useModal();
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const { data, loading, fetchApi } = useApi({
@@ -44,6 +48,28 @@ export default function EventCategoryFaqList() {
   useEffect(() => {
     if (data) setFaqs(data);
   }, [data]);
+
+  const filteredFaqs = useMemo(() => {
+    const q = questionSearchQuery.trim().toLowerCase();
+    if (!q) return faqs;
+    return faqs.filter((faq) => (faq.question || "").toLowerCase().includes(q));
+  }, [faqs, questionSearchQuery]);
+
+  const total = filteredFaqs.length;
+  const lastPage = Math.ceil(total / PER_PAGE) || 1;
+  const paginatedFaqs = useMemo(() => {
+    const start = (currentPage - 1) * PER_PAGE;
+    return filteredFaqs.slice(start, start + PER_PAGE);
+  }, [filteredFaqs, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [questionSearchQuery]);
+
+  useEffect(() => {
+    if (currentPage > lastPage && lastPage >= 1) setCurrentPage(lastPage);
+  }, [lastPage, currentPage]);
+
   const handleDelete = async () => {
     if (!deleteSlug) return;
 
@@ -138,6 +164,13 @@ export default function EventCategoryFaqList() {
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             See all
           </button> */}
+          <input
+            type="text"
+            placeholder="Search by question..."
+            value={questionSearchQuery}
+            onChange={(e) => setQuestionSearchQuery(e.target.value)}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm text-gray-700 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500"
+          />
           <Link href="/admin/event-category-faq/add">
             <Button>Add Service Category FAQ</Button>
             </Link>
@@ -190,7 +223,7 @@ export default function EventCategoryFaqList() {
           {/* Table Body */}
 
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {faqs.map((faq) => (
+            {paginatedFaqs.map((faq) => (
               <TableRow key={faq.id} className="">
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
@@ -238,6 +271,36 @@ export default function EventCategoryFaqList() {
           </TableBody>
         </Table>
       </div>
+
+      {lastPage > 1 && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 dark:border-gray-800 pt-4">
+          <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+            Showing {(currentPage - 1) * PER_PAGE + 1}–
+            {Math.min(currentPage * PER_PAGE, total)} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            >
+              Previous
+            </button>
+            <span className="text-theme-sm text-gray-600 dark:text-gray-400">
+              Page {currentPage} of {lastPage}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(lastPage, p + 1))}
+              disabled={currentPage >= lastPage}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );

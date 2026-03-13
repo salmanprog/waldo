@@ -97,6 +97,11 @@ export default class AdminGalleryHook {
           sortOrder: "asc",
         },
       },
+      companies: {
+        select: {
+          companyId: true,
+        },
+      },
     };
     query.where = { ...query.where, deletedAt: null };
     return query;

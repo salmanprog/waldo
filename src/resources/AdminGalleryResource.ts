@@ -33,6 +33,8 @@ export type ExtendedGallery = {
     slug: string;
   } | null;
 
+  companies?: { companyId: number }[];
+
   items?: {
     id: number;
     title?: string | null;
@@ -77,6 +79,7 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
             slug: gallery.event.slug,
           }
         : null,
+      companyIds: gallery.companies?.map((c) => c.companyId) ?? [],
       items: gallery.items
         ? gallery.items.map(item => ({
             id: item.id,

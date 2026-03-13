@@ -23,6 +23,7 @@ export default function EditGallery() {
   const [is_coff_book, setIs_coff_book] = useState<"1" | "0">("0");
   // Store gallery event id temporarily (important)
   const [initialEventId, setInitialEventId] = useState<string>("");
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
   // ---------------- Categories ----------------
   const { data: categoryList, fetchApi: fetchCategories } = useApi({
@@ -37,6 +38,14 @@ export default function EditGallery() {
     url: (eventCategorySlug
       ? `/api/admin/events?cat_id=${eventCategorySlug}`
       : "") as string,
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  // ---------------- Companies ----------------
+  const { data: companyList, fetchApi: fetchCompanies } = useApi({
+    url: "/api/admin/companies",
     method: "GET",
     type: "manual",
     requiresAuth: true,
@@ -61,8 +70,15 @@ export default function EditGallery() {
   useEffect(() => {
     document.title = "Admin | Edit Gallery";
     fetchCategories();
+    fetchCompanies();
     fetchGallery();
   }, []);
+
+  const toggleCompany = (id: string) => {
+    setSelectedCompanyIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
 
   // ---------------- Fill form from API ----------------
   useEffect(() => {
@@ -83,6 +99,9 @@ export default function EditGallery() {
     // STEP 2: store event id (do NOT set directly yet)
     if (gallery.event?.id) {
       setInitialEventId(String(gallery.event.id));
+    }
+    if (Array.isArray(gallery.companyIds) && gallery.companyIds.length > 0) {
+      setSelectedCompanyIds(gallery.companyIds.map((id: number) => String(id)));
     }
   }, [gallery]);
 
@@ -113,12 +132,15 @@ export default function EditGallery() {
     if (!title) return setErrorMsg("Gallery title is required.");
     if (!eventCategoryId)
       return setErrorMsg("Please select an event category.");
+    if (selectedCompanyIds.length < 1)
+      return setErrorMsg("Please select at least one company.");
 
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("eventCategoryId", eventCategoryId); // slug
       if (eventId) formData.append("eventId", eventId);    // id
+      selectedCompanyIds.forEach((id) => formData.append("companyIds", id));
       formData.append("description", description);
       formData.append("status", status);
       formData.append("is_face_recognition", is_face_recognition);
@@ -202,6 +224,33 @@ export default function EditGallery() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Companies (multiple) */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Companies <span className="text-red-500">*</span>
+            </label>
+            <div className="max-h-40 overflow-y-auto rounded-lg border px-4 py-2 space-y-2">
+              {companyList?.length ? (
+                companyList.map((company: { id: number; name: string }) => (
+                  <label
+                    key={company.id}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 py-1.5 px-2 rounded"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCompanyIds.includes(String(company.id))}
+                      onChange={() => toggleCompany(String(company.id))}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm">{company.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 py-2">No companies available.</p>
+              )}
+            </div>
           </div>
 
           {/* Description */}

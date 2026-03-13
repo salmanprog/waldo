@@ -1,6 +1,5 @@
 export const runtime = "nodejs";
-import AdminGalleryController from "@/controllers/AdminGalleryController";
-import type { ExtendedGallery } from "@/resources/AdminGalleryResource";
+import AdminCompanyController, { ExtendedCompany } from "@/controllers/AdminCompanyController";
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
@@ -12,7 +11,7 @@ export async function GET(
 ) {
   const params = await context.params;
   try {
-    const controller = new AdminGalleryController(_req);
+    const controller = new AdminCompanyController(_req);
     const slug = params.slug;
     return await controller.showSlug(String(slug));
   } catch (error: unknown) {
@@ -32,39 +31,26 @@ export async function PATCH(
   const slug = params.slug;
 
   const contentType = request.headers.get("content-type") || "";
-  let data: Partial<ExtendedGallery> = {};
+  let data: Partial<ExtendedCompany> = {};
 
   try {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
-      let hasImage = false;
-      const companyIds = formData.getAll("companyIds");
-      if (companyIds.length) (data as Record<string, unknown>).companyIds = companyIds as string[];
       for (const [key, value] of formData.entries()) {
-        if (key === "companyIds") continue;
         if (typeof value === "string") {
-          (data as Record<string, any>)[key] = value;
-        } else if (value instanceof Blob && key === "image" && value.size > 0) {
-          // Only process if image file is provided and has content
-          hasImage = true;
-          const buffer = Buffer.from(await value.arrayBuffer());
-
-          // Save in a dedicated 'blog' folder
-          const uploadDir = path.join(process.cwd(), "public", "uploads", "blog");
+          (data as Record<string, unknown>)[key] = value;
+        } else if (value instanceof Blob && key === "image") {
+          const uploadDir = path.join(process.cwd(), "public", "uploads", "company");
           await fs.mkdir(uploadDir, { recursive: true });
-
-          const fileName = `${Date.now()}-${value.name}`;
+          const buffer = Buffer.from(await value.arrayBuffer());
+          const fileName = `${Date.now()}-${(value as File).name}`;
           const filePath = path.join(uploadDir, fileName);
           await fs.writeFile(filePath, buffer);
-
-          (data as Record<string, any>).imageUrl = `/uploads/blog/${fileName}`;
+          (data as Record<string, unknown>).imageUrl = `/uploads/company/${fileName}`;
         }
       }
-      // imageUrl is only included in data if a new image was uploaded
     } else if (contentType.includes("application/json")) {
       data = await request.json();
-      // If imageUrl is explicitly set to null/empty in JSON, it will be included
-      // Otherwise, imageUrl won't be in the data object, so it won't be updated
     } else {
       return NextResponse.json(
         { code: 415, message: "Unsupported Media Type. Use JSON or form-data." },
@@ -72,7 +58,7 @@ export async function PATCH(
       );
     }
 
-    const controller = new AdminGalleryController(request, data);
+    const controller = new AdminCompanyController(request, data);
     return controller.updateBySlug(slug, data);
   } catch (error: unknown) {
     return NextResponse.json(
@@ -90,7 +76,7 @@ export async function DELETE(
   const params = await context.params;
   try {
     const slug = params.slug;
-    const controller = new AdminGalleryController(_req);
+    const controller = new AdminCompanyController(_req);
     return await controller.destroyBySlug(slug);
   } catch (error: unknown) {
     return NextResponse.json(
@@ -99,4 +85,3 @@ export async function DELETE(
     );
   }
 }
-

@@ -1,11 +1,9 @@
 export const runtime = "nodejs";
-import AdminGalleryController from "@/controllers/AdminGalleryController";
-import type { ExtendedGallery } from "@/resources/AdminGalleryResource";
+import AdminCompanyController, { ExtendedCompany } from "@/controllers/AdminCompanyController";
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { verifyToken } from "@/utils/jwt";
-import { generateSlug } from "@/utils/slug";
 
 interface DecodedToken {
   id: string;
@@ -15,34 +13,25 @@ interface DecodedToken {
 // ------------------- POST (store) -------------------
 export async function POST(request: Request) {
   const contentType = request.headers.get("content-type") || "";
-  let data: Partial<ExtendedGallery> = {};
+  let data: Partial<ExtendedCompany> = {};
 
   try {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
-      const title = formData.get("title") as string | null;
-      const slug = title
-        ? await generateSlug("gallery" as any, title)
-        : `gallery-${Date.now()}`;
-      const folderName = `gallery/${slug}`;
+      const folderName = "company";
       const uploadDir = path.join(process.cwd(), "public", "uploads", folderName);
       await fs.mkdir(uploadDir, { recursive: true });
 
-      data.galleryPath = `/uploads/${folderName}`;
-      const companyIds = formData.getAll("companyIds");
-      if (companyIds.length) (data as Record<string, unknown>).companyIds = companyIds as string[];
       for (const [key, value] of formData.entries()) {
-        if (key === "companyIds") continue;
         if (typeof value === "string") {
-          (data as Record<string, any>)[key] = value;
+          (data as Record<string, unknown>)[key] = value;
         } else if (value instanceof Blob && key === "image") {
           const file = value as File;
-                    
           const buffer = Buffer.from(await file.arrayBuffer());
           const fileName = `${Date.now()}-${file.name || "upload"}`;
           const filePath = path.join(uploadDir, fileName);
           await fs.writeFile(filePath, buffer);
-          (data as Record<string, any>).imageUrl = `/uploads/${folderName}/${fileName}`;
+          (data as Record<string, unknown>).imageUrl = `/uploads/${folderName}/${fileName}`;
         }
       }
     } else if (contentType.includes("application/json")) {
@@ -54,10 +43,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const controller = new AdminGalleryController(request, data);
+    const controller = new AdminCompanyController(request, data);
     return await controller.store(data);
   } catch (error: unknown) {
-    console.error("Error uploading gallery image:", error);
+    console.error("Error uploading company image:", error);
     return NextResponse.json(
       { code: 500, message: "Internal Server Error", error: (error as Error).message },
       { status: 500 }
@@ -65,25 +54,22 @@ export async function POST(request: Request) {
   }
 }
 
-// ------------------- GET (list all gallery) -------------------
+// ------------------- GET (list all companies) -------------------
 async function getUserFromRequest(req: Request): Promise<DecodedToken | null> {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return null;
-    
-    const token = authHeader.split(" ")[1]; // Bearer token
+    const token = authHeader.split(" ")[1];
     const decoded = await verifyToken(token);
-
-    if (!decoded || typeof decoded === "string") return null; // invalid token
+    if (!decoded || typeof decoded === "string") return null;
     return decoded as DecodedToken;
   } catch (err) {
-    return null; // catch any verify error
+    return null;
   }
 }
 
 export async function GET(req: Request) {
   const user = await getUserFromRequest(req);
- 
   if (!user) {
     return NextResponse.json(
       {
@@ -95,7 +81,6 @@ export async function GET(req: Request) {
     );
   }
 
-  const controller = new AdminGalleryController(req, { id: Number(user.id) });
+  const controller = new AdminCompanyController(req, { id: Number(user.id) });
   return controller.index();
 }
-

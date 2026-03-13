@@ -53,6 +53,14 @@ export const updateBlogCategory = yup.object({
   title: yup.string().required("Category title is required"),
 });
 
+export const storeCompany = yup.object({
+  name: yup.string().required("Company name is required"),
+});
+
+export const updateCompany = yup.object({
+  name: yup.string().required("Company name is required"),
+});
+
 export const storeEvent = yup.object({
   title: yup.string().required("Event name is required"),
   categoryId: yup.string().required("Event category is required"),

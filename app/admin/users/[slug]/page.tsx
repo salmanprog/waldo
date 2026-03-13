@@ -195,13 +195,46 @@ export default function UserDetailsPage() {
               <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-2">
                 {[user.name, user.lname].filter(Boolean).join(" ") || user.username || "N/A"}
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge color={user.status ? "success" : "error"}>
                   {user.status ? "Active" : "Inactive"}
                 </Badge>
                 {user.role && (
                   <Badge color="primary">{user.role.title}</Badge>
                 )}
+                <Button
+                  onClick={() => {
+                    const escapeCsv = (val: string | number | boolean | null | undefined) => {
+                      const s = String(val ?? "");
+                      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+                      return s;
+                    };
+                    const headers = ["ID", "Slug", "Name", "Last Name", "Email", "Mobile Number", "Address", "Platoon", "Role"];
+                    const row = [
+                      user.id,
+                      user.slug ?? "",
+                      user.name ?? "",
+                      user.lname ?? "",
+                      user.email ?? "",
+                      user.mobileNumber ?? "",
+                      user.address ?? "",
+                      user.platoon ?? "",
+                      user.role?.title ?? "",
+                    ].map(escapeCsv).join(",");
+                    const csv = [headers.join(","), row].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `user-details-${user.slug || user.id}-${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  variant="outline"
+                  className="ml-auto"
+                >
+                  Export
+                </Button>
               </div>
             </div>
 
