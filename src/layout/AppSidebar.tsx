@@ -79,7 +79,7 @@ const navItems: NavItem[] = [
     name: 'Services Gallery',
     subItems: [
       { name: 'Gallery', path: '/admin/gallery/', pro: false },
-      { name: 'Gallery Platoon', path: '/admin/gallery-platoon/', pro: false },
+      // { name: 'Gallery Platoon', path: '/admin/gallery-platoon/', pro: false },
       { name: 'Gallery Images', path: '/admin/gallery-images/', pro: false },
     ],
   },

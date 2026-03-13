@@ -28,11 +28,49 @@ export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [ordersChecked, setOrdersChecked] = useState(false);
+  const [hasPurchase, setHasPurchase] = useState(false);
 
   // Set page title
   useEffect(() => {
     document.title = "My Waldo | Blog";
   }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+        : "";
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const { data: ordersData, fetchApi: fetchOrders } = useApi({
+    url: "/api/users/orders",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  useEffect(() => {
+    if (mounted && isLoggedIn) {
+      fetchOrders();
+    }
+  }, [mounted, isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setOrdersChecked(false);
+      setHasPurchase(false);
+      return;
+    }
+    if (ordersData === null) return;
+    setOrdersChecked(true);
+    const list = Array.isArray(ordersData) ? ordersData : (ordersData as { data?: unknown[] })?.data;
+    setHasPurchase(Array.isArray(list) && list.length > 0);
+  }, [isLoggedIn, ordersData]);
 
   const { data: categoriesData, fetchApi: fetchCategories } = useApi({
     url: "/api/users/blog-category",
@@ -81,82 +119,104 @@ export default function BlogPage() {
       <InnerBanner bannerClass="blog-banner" title="Waldo News" />
       <section className="blog-section sec-gap">
         <div className="container">
-          {/* Category filter */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <button
-              type="button"
-              onClick={() => setSelectedCategoryId("")}
-              className={selectedCategoryId === "" ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategoryId(String(cat.id))}
-                className={selectedCategoryId === String(cat.id) ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
-              >
-                {cat.title}
-              </button>
-            ))}
-          </div>
-
-          {apiLoading ? (
-            <div className="text-center py-8 loading-text">Loading blogs...</div>
-          ) : apiError ? (
-            <div className="text-center py-8 text-red-500">Error loading blogs: {apiError}</div>
-          ) : blogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {blogs.map((blog) => (
-                <div key={blog.id} className="blog-card group">
-                  <div className="blog-card-image">
-                    {blog.imageUrl ? (
-                      <Image
-                      src={blog.imageUrl.startsWith("http")
-                        ? blog.imageUrl
-                        : `${blog.imageUrl}`
-                      }
-                      alt={blog.title || "Blog image"}
-                      width={400}
-                      height={264}
-                      className="w-full h-[264px] object-cover rounded"
-                      unoptimized
-                    />
-                    ) : (
-                      <div className="w-full h-[264px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <span className="text-gray-400">No Image</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="blog-card-content">
-                    <span className="blog-card-date">
-                      {new Date(blog.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                    <h3 className="blog-card-title line-clamp-2">{blog.title}</h3>
-                    {blog.description && (
-                      <p className="blog-card-description line-clamp-3">{blog.description}</p>
-                    )}
-                  </div>
-                  <div className="blog-hidden-content">
-                    <Link href={`/blog/${blog.slug}`} className="btn btn-primary w-full flex justify-center items-center gap-2">
-                      <span>Read More</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+          {!mounted ? (
+            <div className="text-center py-8 loading-text">Loading...</div>
+          ) : !isLoggedIn ? (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">You need to be login first to access this page.</p>
+              <Link href="/login" className="btn btn-primary inline-flex justify-center items-center gap-2">
+                Login
+              </Link>
+            </div>
+          ) : !ordersChecked ? (
+            <div className="text-center py-8 loading-text">Loading...</div>
+          ) : !hasPurchase ? (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">You need to purchase a package to access Waldo News.</p>
+              <Link href="/" className="btn btn-primary inline-flex justify-center items-center gap-2">
+                View Packages
+              </Link>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-xl text-gray-600">No blogs found.</p>
-            </div>
+            <>
+              {/* Category filter */}
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId("")}
+                  className={selectedCategoryId === "" ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
+                >
+                  All
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategoryId(String(cat.id))}
+                    className={selectedCategoryId === String(cat.id) ? "btn btn-primary" : "btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}
+                  >
+                    {cat.title}
+                  </button>
+                ))}
+              </div>
+
+              {apiLoading ? (
+                <div className="text-center py-8 loading-text">Loading blogs...</div>
+              ) : apiError ? (
+                <div className="text-center py-8 text-red-500">Error loading blogs: {apiError}</div>
+              ) : blogs.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {blogs.map((blog) => (
+                    <div key={blog.id} className="blog-card group">
+                      <div className="blog-card-image">
+                        {blog.imageUrl ? (
+                          <Image
+                          src={blog.imageUrl.startsWith("http")
+                            ? blog.imageUrl
+                            : `${blog.imageUrl}`
+                          }
+                          alt={blog.title || "Blog image"}
+                          width={400}
+                          height={264}
+                          className="w-full h-[264px] object-cover rounded"
+                          unoptimized
+                        />
+                        ) : (
+                          <div className="w-full h-[264px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <span className="text-gray-400">No Image</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="blog-card-content">
+                        <span className="blog-card-date">
+                          {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </span>
+                        <h3 className="blog-card-title line-clamp-2">{blog.title}</h3>
+                        {blog.description && (
+                          <p className="blog-card-description line-clamp-3">{blog.description}</p>
+                        )}
+                      </div>
+                      <div className="blog-hidden-content">
+                        <Link href={`/blog/${blog.slug}`} className="btn btn-primary w-full flex justify-center items-center gap-2">
+                          <span>Read More</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-xl text-gray-600">No blogs found.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

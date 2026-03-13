@@ -33,9 +33,7 @@ export default function HomePage() {
     "/images/home/hero/10.jpg",
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(
-    Math.floor(Math.random() * images.length)
-  );
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [categories, setCategories] = useState<EventCategory[]>([]);
 
   const { data, loading: apiLoading, error: apiError, fetchApi } = useApi({
@@ -57,8 +55,9 @@ export default function HomePage() {
     }
   }, [data]);
 
-  // Hero image rotation
+  // Hero image rotation: start at random index on client only (avoids hydration mismatch)
   useEffect(() => {
+    setCurrentIndex(Math.floor(Math.random() * images.length));
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 2000);

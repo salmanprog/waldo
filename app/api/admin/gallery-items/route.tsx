@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       const galleryId = Number(rawGalleryId);
       const gallery = await prisma.gallery.findUnique({
         where: { id: galleryId },
-        select: { id: true, galleryPath: true },
+        select: { id: true, galleryPath: true, title: true, slug: true },
       });
 
       if (!gallery || !gallery.galleryPath) {
@@ -32,12 +32,12 @@ export async function POST(request: Request) {
         );
       }
 
-      const rawPlatoonNumber = formData.get("platoonNumber");
-      const platoonNumber = rawPlatoonNumber != null && String(rawPlatoonNumber).trim() !== ""
-        ? String(rawPlatoonNumber).trim()
-        : null;
-      // Platoon folder is outside items: galleryPath/platoon-1/ (not galleryPath/items/platoon-1/)
-      const uploadSubdir = platoonNumber ? `platoon-${platoonNumber}` : "items";
+      // Use gallery name (title or slug) for upload subdirectory, sanitized for filesystem
+      const galleryNameRaw = (gallery.title || gallery.slug || "gallery").trim();
+      const uploadSubdir = galleryNameRaw
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "gallery";
       
       const relativePath = gallery.galleryPath.replace(/^\/uploads\//, "");
       const uploadDir = path.join(

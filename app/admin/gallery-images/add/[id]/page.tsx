@@ -26,7 +26,6 @@ export default function AddGalleryImages() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [platoonNumber, setPlatoonNumber] = useState("");
 
   // Face index: which image paths are indexed, and indexing progress
   const [indexedPaths, setIndexedPaths] = useState<Set<string>>(new Set());
@@ -57,14 +56,6 @@ export default function AddGalleryImages() {
     requiresAuth: true,
   });
 
-  // gallery platoons for this gallery
-  const { data: platoonList, fetchApi: fetchPlatoons } = useApi({
-    url: galleryId ? `/api/admin/gallery-platoon?galleryId=${galleryId}` : "",
-    method: "GET",
-    type: "manual",
-    requiresAuth: true,
-  });
-
   // delete API (same pattern)
   const { sendData: deleteItem } = useApi({
     url: "/api/admin/gallery-items",
@@ -76,7 +67,6 @@ export default function AddGalleryImages() {
   useEffect(() => {
     if (galleryId) {
       fetchGalleryItems();
-      fetchPlatoons();
     }
   }, [galleryId]);
 
@@ -148,12 +138,10 @@ export default function AddGalleryImages() {
     setErrorMsg("");
 
     if (!galleryId) return setErrorMsg("Gallery ID missing");
-    if (!platoonNumber) return setErrorMsg("Please select a platoon number.");
     if (!images.length) return setErrorMsg("Select at least one image");
 
     const formData = new FormData();
     formData.append("galleryId", galleryId);
-    formData.append("platoonNumber", platoonNumber);
 
     images.forEach((file) => {
       formData.append("images[]", file);
@@ -184,7 +172,6 @@ export default function AddGalleryImages() {
   // ================= BUILD FACE INDEX =================
   const runFaceIndex = async () => {
     if (!galleryId) return setErrorMsg("Gallery ID missing");
-    if (!platoonNumber) return setErrorMsg("Please select a platoon to build face index.");
     setErrorMsg("");
     setIndexing(true);
     setIndexProgress(0);
@@ -198,7 +185,6 @@ export default function AddGalleryImages() {
         },
         body: JSON.stringify({
           galleryId: Number(galleryId),
-          platoonNumber: platoonNumber,
           fullRebuild,
         }),
       });
@@ -279,18 +265,10 @@ export default function AddGalleryImages() {
   };
 
   // ================= PAGINATION =================
-  // When platoon selected, filter images by platoonNumber; otherwise show all
   const rawItems = Array.isArray(galleryItems) ? galleryItems : [];
-  const allImages = platoonNumber
-    ? rawItems.filter((img: any) => Number(img.platoonNumber) === Number(platoonNumber))
-    : rawItems;
+  const allImages = rawItems;
   const visibleImages = allImages.slice(0, visibleCount);
   const hasMore = visibleCount < allImages.length;
-
-  // Reset visible count when platoon selection changes
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [platoonNumber]);
 
   // ================= UI =================
   return (
@@ -307,29 +285,6 @@ export default function AddGalleryImages() {
 
       {/* ================= UPLOAD FORM ================= */}
       <form onSubmit={uploadImages} className="space-y-5 mb-10">
-        {/* Platoon Number dropdown - platoons for this gallery */}
-        {galleryId && (
-          <div>
-            <label className="block text-sm font-medium mb-1.5">
-              Platoon Number <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={platoonNumber}
-              onChange={(e) => setPlatoonNumber(e.target.value)}
-              className="h-11 w-full rounded-lg border px-4 max-w-xs"
-              disabled={uploading}
-              required
-            >
-              <option value="">-- Select Platoon --</option>
-              {(platoonList ?? []).map((p: { id: number; platoonNumber: number }) => (
-                <option key={p.id} value={p.platoonNumber}>
-                  Platoon - {p.platoonNumber}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         <input
           ref={fileInputRef}
           type="file"
@@ -415,11 +370,11 @@ export default function AddGalleryImages() {
       </form>
 
       {/* ================= BUILD FACE INDEX ================= */}
-      {galleryId && platoonNumber && (
+      {galleryId && (
         <div className="mb-8 p-4 border rounded-lg bg-gray-50">
-          <h3 className="text-lg font-semibold mb-2">Face index (Platoon {platoonNumber})</h3>
+          <h3 className="text-lg font-semibold mb-2">Face index</h3>
           <p className="text-sm text-gray-600 mb-3">
-            Index faces in this platoon&apos;s directory so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index all images in this platoon.
+            Index faces in this gallery&apos;s directory so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index all images in this gallery.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
@@ -429,7 +384,7 @@ export default function AddGalleryImages() {
                 onChange={(e) => setFullRebuild(e.target.checked)}
                 disabled={indexing || uploading}
               />
-              Full rebuild (re-index all images in this platoon)
+              Full rebuild (re-index all images in this gallery)
             </label>
             <Button
               type="button"
@@ -460,18 +415,9 @@ export default function AddGalleryImages() {
       {/* ================= EXISTING GALLERY GRID ================= */}
       <h3 className="text-lg font-semibold mb-4">
         Gallery Images
-        {platoonNumber && (
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            (Platoon {platoonNumber})
-          </span>
-        )}
       </h3>
 
-      {!platoonNumber ? (
-        <p className="text-gray-500 py-8 text-center rounded-lg border border-dashed border-gray-300">
-          Select a platoon to view images
-        </p>
-      ) : visibleImages.length === 0 ? (
+      {visibleImages.length === 0 ? (
         <p className="text-gray-500 py-8 text-center rounded-lg border border-dashed border-gray-300">
           No images found
         </p>
@@ -511,7 +457,7 @@ export default function AddGalleryImages() {
       )}
 
       {/* LOAD MORE */}
-      {platoonNumber && hasMore && (
+      {hasMore && (
         <div className="flex justify-center mt-6">
           <Button onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
             Load More

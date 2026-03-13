@@ -77,10 +77,11 @@ export default class AdminGalleryController extends RestController<
 
   protected async afterStore(record: ExtendedGallery): Promise<ExtendedGallery> {
     const companyIdsToLink = (this as unknown as { _companyIdsToLink?: string[] })._companyIdsToLink;
-    if (Array.isArray(companyIdsToLink) && companyIdsToLink.length > 0 && record?.id) {
+    const galleryId = record?.id;
+    if (Array.isArray(companyIdsToLink) && companyIdsToLink.length > 0 && galleryId != null) {
       await prisma.galleryCompany.createMany({
         data: companyIdsToLink.map((id) => ({
-          galleryId: record.id,
+          galleryId,
           companyId: parseInt(id, 10),
         })),
         skipDuplicates: true,
@@ -115,12 +116,13 @@ export default class AdminGalleryController extends RestController<
 
   protected async afterUpdate(record: ExtendedGallery): Promise<ExtendedGallery> {
     const companyIdsToLink = (this as unknown as { _companyIdsToLink?: string[] })._companyIdsToLink;
-    if (Array.isArray(companyIdsToLink) && record?.id) {
-      await prisma.galleryCompany.deleteMany({ where: { galleryId: record.id } });
+    const galleryId = record?.id;
+    if (Array.isArray(companyIdsToLink) && galleryId != null) {
+      await prisma.galleryCompany.deleteMany({ where: { galleryId } });
       if (companyIdsToLink.length > 0) {
         await prisma.galleryCompany.createMany({
           data: companyIdsToLink.map((id) => ({
-            galleryId: record.id as number,
+            galleryId,
             companyId: parseInt(id, 10),
           })),
           skipDuplicates: true,

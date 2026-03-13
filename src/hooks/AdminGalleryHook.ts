@@ -46,7 +46,8 @@ export default class AdminGalleryHook {
         query.where = { ...query.where, eventId };
       }
     }
-    // Filter by platoonNumber from purchased order (for /purchase/[orderId]/gallery)
+    // Filter by platoonNumber from purchased order when present (for /purchase/[orderId]/gallery).
+    // When platoon is removed, order.platoonNumber may be null — then show all galleries for the event.
     if ("orderId" in q && q.orderId && user?.id) {
       const orderId = typeof q.orderId === "string" ? parseInt(q.orderId, 10) : Number(q.orderId);
       if (!isNaN(orderId)) {
@@ -54,10 +55,11 @@ export default class AdminGalleryHook {
           where: { id: orderId, userId: Number(user.id), status: "PAID" },
           select: { platoonNumber: true },
         });
-        if (order != null) {
+        const platoonNum = order?.platoonNumber;
+        if (order != null && platoonNum != null && platoonNum > 0) {
           query.where = {
             ...query.where,
-            platoons: { some: { platoonNumber: order.platoonNumber } },
+            platoons: { some: { platoonNumber: platoonNum } },
           };
         }
       }

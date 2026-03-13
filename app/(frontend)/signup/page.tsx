@@ -31,12 +31,9 @@ export default function SignUpPage() {
     email: "",
     mobileNumber: "",
     address: "",
-    categoryId: "",
-    platoon: "",
     password: "",
     confirmPassword: "",
   });
-  const [categories, setCategories] = useState<{ id: number; name: string; slug: string; is_platoon?: boolean }[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMsg, setErrorMsg] = useState("");
@@ -69,23 +66,6 @@ export default function SignUpPage() {
     requiresAuth: false,
   });
 
-  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
-    url: "/api/users/events/category",
-    method: "GET",
-    type: "manual",
-    requiresAuth: false,
-  });
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (categoriesData && Array.isArray(categoriesData)) {
-      setCategories(categoriesData.map((c: { id: number; name: string; slug: string; is_platoon?: boolean }) => ({ id: c.id, name: c.name, slug: c.slug, is_platoon: c.is_platoon })));
-    }
-  }, [categoriesData]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -106,8 +86,6 @@ export default function SignUpPage() {
     }
 
     if (!form.mobileNumber.trim()) newErrors.mobileNumber = "Phone is required";
-    const selectedCategory = categories.find((c) => String(c.id) === form.categoryId);
-    if (selectedCategory?.is_platoon === true && !form.platoon.trim()) newErrors.platoon = "Platoon is required";
 
     if (!form.password) newErrors.password = "Password is required";
     if (form.password.length < 6)
@@ -137,8 +115,6 @@ export default function SignUpPage() {
       fd.append("lname", form.lname);
       fd.append("mobileNumber", form.mobileNumber);
       fd.append("address", form.address);
-      if (form.categoryId) fd.append("categoryId", form.categoryId);
-      fd.append("platoon", form.platoon);
       fd.append("password", form.password);
 
       const res = await sendData<ApiResponse<SignupResponse>>(fd, undefined, "POST");
@@ -238,44 +214,6 @@ export default function SignUpPage() {
                   error={!!errors.address}
                   hint={errors.address}
                 />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category
-                  </label>
-                  <select
-                    name="categoryId"
-                    value={form.categoryId}
-                    onChange={handleChange}
-                    className="w-full h-11 rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs focus:border-brand-300 dark:bg-gray-900 dark:text-white dark:border-gray-700"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={String(cat.id)}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.categoryId && (
-                    <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
-                  )}
-                </div>
-
-                {(() => {
-                  const selectedCat = categories.find((c) => String(c.id) === form.categoryId);
-                  if (selectedCat?.is_platoon !== true) return null;
-                  return (
-                    <Input
-                      name="platoon"
-                      type="text"
-                      placeholder="Platoon"
-                      value={form.platoon}
-                      onChange={handleChange}
-                      error={!!errors.platoon}
-                      hint={errors.platoon}
-                    />
-                  );
-                })()}
 
                 <div className="relative">
                   <Input
