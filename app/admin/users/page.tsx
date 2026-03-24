@@ -201,12 +201,6 @@ export default function UserList() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Platoon Number
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Role
               </TableCell>
               <TableCell
@@ -257,9 +251,6 @@ export default function UserList() {
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {user.categoryName || "N/A"}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {user.platoon || "N/A"}
                   </TableCell>
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {user.role?.title || "N/A"}

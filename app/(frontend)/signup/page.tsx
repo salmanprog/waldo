@@ -31,6 +31,8 @@ export default function SignUpPage() {
     email: "",
     mobileNumber: "",
     address: "",
+    categoryId: "",
+    companyId: "",
     password: "",
     confirmPassword: "",
   });
@@ -65,6 +67,25 @@ export default function SignUpPage() {
     type: "manual",
     requiresAuth: false,
   });
+
+  const { data: categoryList, fetchApi: fetchCategories } = useApi({
+    url: "/api/users/events/category",
+    method: "GET",
+    type: "manual",
+    requiresAuth: false,
+  });
+
+  const { data: companyList, fetchApi: fetchCompanies } = useApi({
+    url: "/api/users/companies",
+    method: "GET",
+    type: "manual",
+    requiresAuth: false,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+    fetchCompanies();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -115,6 +136,8 @@ export default function SignUpPage() {
       fd.append("lname", form.lname);
       fd.append("mobileNumber", form.mobileNumber);
       fd.append("address", form.address);
+      if (form.categoryId) fd.append("categoryId", form.categoryId);
+      if (form.companyId) fd.append("companyId", form.companyId);
       fd.append("password", form.password);
 
       const res = await sendData<ApiResponse<SignupResponse>>(fd, undefined, "POST");
@@ -204,6 +227,40 @@ export default function SignUpPage() {
                   error={!!errors.mobileNumber}
                   hint={errors.mobileNumber}
                 />
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <select
+                    name="categoryId"
+                    value={form.categoryId}
+                    onChange={handleChange}
+                    className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+                  >
+                    <option value="">-- Select Category --</option>
+                    {categoryList?.map((cat: { id: number; name: string }) => (
+                      <option key={cat.id} value={String(cat.id)}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Company</label>
+                  <select
+                    name="companyId"
+                    value={form.companyId}
+                    onChange={handleChange}
+                    className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+                  >
+                    <option value="">-- Select Company --</option>
+                    {companyList?.map((company: { id: number; name: string }) => (
+                      <option key={company.id} value={String(company.id)}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <Input
                   name="address"

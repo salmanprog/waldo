@@ -89,7 +89,7 @@ model User {
   imageUrl          String?     @db.Text
   address           String?     @db.Text
   categoryId        String?     @db.VarChar(250)
-  platoon           String?     @db.VarChar(250)
+  companyId         String?     @db.VarChar(250)
   status            Boolean     @default(true)
   isEmailVerify     Boolean     @default(false)
   emailVerifyAt     DateTime?
@@ -141,6 +141,7 @@ model Event {
   description String?   @db.Text
   imageUrl    String?   @db.Text
   price       Float?    @default(0)
+  numberOfDownlaod String    @db.VarChar(255)
   is_manual   Boolean   @default(true)
   is_face     Boolean   @default(true)
   status      Boolean   @default(true)
@@ -246,6 +247,9 @@ model Order {
   userId          Int
   platoonNumber          Int
   stripeSessionId String      @unique
+  totalnumberOfDownlaod String?   @db.VarChar(255)
+  totalDownlaod String?   @db.VarChar(255)
+  remainingDownlaod String?   @db.VarChar(255)
   total           Decimal     @db.Decimal(10,2)
   status          OrderStatus @default(PENDING)
   purchaseDate    DateTime    @default(now())
@@ -265,7 +269,9 @@ model OrderItem {
   title     String
   price     Decimal  @db.Decimal(10,2)
   quantity  Int
-
+  totalnumberOfDownlaod String?   @db.VarChar(255)
+  totalDownlaod String?   @db.VarChar(255)
+  remainingDownlaod String?   @db.VarChar(255)
   order     Order    @relation(fields: [orderId], references: [id])
 
   createdAt DateTime @default(now())
@@ -280,6 +286,7 @@ model Gallery {
   imageUrl        String    @db.Text
   description     String?   @db.Text
   galleryPath     String?   @db.VarChar(255)
+  numberOfDownlaod String?   @db.VarChar(255)
   is_face_recognition Boolean   @default(false)
   face_recognition_heading     String?   @db.VarChar(50)
   is_coff_book Boolean   @default(false)

@@ -14,6 +14,34 @@ function parsePrice(value: any): number {
   return parsed;
 }
 
+/** Stripe cart metadata often omits download fields; use Event as source of truth. */
+async function resolveDownloadAllowance(item: {
+  id?: unknown;
+  numberOfDownloads?: unknown;
+  numberOfDownlaod?: unknown;
+}): Promise<string> {
+  if (
+    item.numberOfDownloads != null &&
+    String(item.numberOfDownloads).trim() !== ""
+  ) {
+    return String(item.numberOfDownloads);
+  }
+  if (
+    item.numberOfDownlaod != null &&
+    String(item.numberOfDownlaod).trim() !== ""
+  ) {
+    return String(item.numberOfDownlaod);
+  }
+  const ev = await prisma.event.findUnique({
+    where: { id: Number(item.id) },
+    select: { numberOfDownlaod: true },
+  });
+  if (ev?.numberOfDownlaod != null && String(ev.numberOfDownlaod).trim() !== "") {
+    return String(ev.numberOfDownlaod);
+  }
+  return "0";
+}
+
 export async function POST(req: Request) {
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
@@ -48,27 +76,42 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { platoon: true },
-      });
-      const platoonNumber = user?.platoon;
+      const orderItems = await Promise.all(
+        cart.map(async (item: any) => {
+          const allowance = await resolveDownloadAllowance(item);
+          const used =
+            item.totalDownloads != null && String(item.totalDownloads).trim() !== ""
+              ? String(item.totalDownloads)
+              : "0";
+          const remaining =
+            item.remainingDownloads != null &&
+            String(item.remainingDownloads).trim() !== ""
+              ? String(item.remainingDownloads)
+              : allowance;
+
+          return {
+            itemId: Number(item.id),
+            itemslug: String(item.slug),
+            title: String(item.title),
+            price: parsePrice(item.price),
+            quantity: Number(item.quantity) || 1,
+            totalnumberOfDownlaod: allowance,
+            totalDownlaod: used,
+            remainingDownlaod: remaining,
+          };
+        })
+      );
+
       await prisma.order.create({
         data: {
           userId,
-          platoonNumber: Number(platoonNumber),
+          platoonNumber: 0,
           stripeSessionId: session.id,
           total: Number(session.amount_total ?? 0) / 100,
           status: "PAID",
           purchaseDate: new Date(),
           items: {
-            create: cart.map((item: any) => ({
-              itemId: Number(item.id),
-              itemslug: String(item.slug),
-              title: String(item.title),
-              price: parsePrice(item.price),
-              quantity: Number(item.quantity) || 1,
-            })),
+            create: orderItems,
           },
         },
       });

@@ -15,6 +15,7 @@ export default class AdminEventResource extends BaseResource<ExtendedEvent> {
   async toArray(event: ExtendedEvent): Promise<Record<string, unknown>> {
     return {
       id: event.id,
+      title: event.title,
       name: event.title,
       slug: event.slug,
       categoryId: event.categoryId,
@@ -23,6 +24,7 @@ export default class AdminEventResource extends BaseResource<ExtendedEvent> {
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${event.imageUrl}`
         : null,
       description: event.description,
+      numberOfDownlaod: event.numberOfDownlaod ?? null,
       is_manual: event.is_manual,
       is_face: event.is_face,
       category: event.category

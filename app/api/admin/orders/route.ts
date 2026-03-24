@@ -30,7 +30,7 @@ export async function GET(req: Request) {
         take: perPage,
         orderBy: { createdAt: "desc" },
         include: {
-          user: { select: { id: true, name: true, lname: true, slug: true, platoon: true } },
+          user: { select: { id: true, name: true, lname: true, slug: true } },
           items: { select: { id: true, title: true, quantity: true, price: true } },
         },
       }),
@@ -44,7 +44,6 @@ export async function GET(req: Request) {
         ? {
             name: [order.user.name, order.user.lname].filter(Boolean).join(" ") || null,
             slug: order.user.slug,
-            platoon: order.user.platoon,
           }
         : null,
       platoonNumber: order.platoonNumber,

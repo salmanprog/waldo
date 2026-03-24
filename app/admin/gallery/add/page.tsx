@@ -25,6 +25,7 @@ export default function AddGallery() {
   const [errorMsg, setErrorMsg] = useState("");
   const [eventCategorySlug, setEventCategorySlug] = useState("");
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
+  const [numberOfDownlaod, setNumberOfDownlaod] = useState("0");
 
   // Load event categories
   const { data: categoryList, fetchApi: fetchCategories } = useApi({
@@ -92,6 +93,7 @@ export default function AddGallery() {
       formData.append("eventCategoryId", eventCategoryId);
       if (eventId) formData.append("eventId", eventId);
       selectedCompanyIds.forEach((id) => formData.append("companyIds", id));
+      formData.append("numberOfDownlaod", numberOfDownlaod);
       formData.append("description", description);
       formData.append("is_face_recognition", is_face_recognition);
       if (is_face_recognition === "1") formData.append("face_recognition_heading", face_recognition_heading);
@@ -209,6 +211,18 @@ export default function AddGallery() {
                 <p className="text-sm text-gray-500 py-2">No companies available.</p>
               )}
             </div>
+          </div>
+
+          {/* Number Of Download */}
+          <div style={{ display: 'none' }}>
+            <label className="block text-sm font-medium mb-2">Number Of Download</label>
+            <input
+              type="text"
+              placeholder="Enter number of download"
+              value={numberOfDownlaod}
+              onChange={(e) => setNumberOfDownlaod(e.target.value)}
+              className="h-11 w-full rounded-lg border px-4"
+            />
           </div>
 
           {/* Description */}

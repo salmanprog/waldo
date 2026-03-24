@@ -38,7 +38,6 @@ export default class AdminUserResource extends BaseResource<ExtendedUser> {
       gender: user.gender,
       profileType: user.profileType,
       status: user.status,
-      platoon: user.platoon,
       isEmailVerify: user.isEmailVerify,
       emailVerifyAt: user.emailVerifyAt,
       platformType: user.platformType,

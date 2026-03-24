@@ -19,6 +19,7 @@ export default function AddEvent() {
   const [status, setStatus] = useState("1");
   const [image, setImage] = useState<File | null>(null);
   const [description, setDescription] = useState("");
+  const [numberOfDownlaod, setNumberOfDownlaod] = useState("");
   const [isFace, setIsFace] = useState("0"); 
   const [isManual, setIsManual] = useState("0");
   const [errorMsg, setErrorMsg] = useState("");
@@ -49,6 +50,7 @@ export default function AddEvent() {
     if (!title) return setErrorMsg("Event title is required.");
     if (!categoryId) return setErrorMsg("Please select a category.");
     if (!price) return setErrorMsg("Event price is required.");
+    if (!numberOfDownlaod.trim()) return setErrorMsg("Number Of Download is required.");
 
     try {
       const formData = new FormData();
@@ -56,6 +58,7 @@ export default function AddEvent() {
       formData.append("categoryId", categoryId);
       formData.append("price", String(Number(price)));
       formData.append("description", description);
+      formData.append("numberOfDownlaod", numberOfDownlaod.trim());
       formData.append("status", status);
       formData.append("is_face", isFace);
       formData.append("is_manual", isManual);
@@ -143,6 +146,18 @@ export default function AddEvent() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg border px-4 py-2.5"
+            />
+          </div>
+
+          {/* Number Of Download */}
+          <div>
+            <label className="block text-sm font-medium">Number Of Download <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              placeholder="Enter number of download"
+              value={numberOfDownlaod}
+              onChange={(e) => setNumberOfDownlaod(e.target.value)}
+              className="h-11 w-full rounded-lg border px-4"
             />
           </div>
 

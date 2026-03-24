@@ -16,6 +16,21 @@ interface Gallery {
   is_face_recognition?: boolean;
   face_recognition_heading?: string | null;
   galleryPath?: string | null;
+  numberOfDownlaod?: string | null;
+}
+
+interface OrderItemDownloads {
+  remainingDownlaod?: string | null;
+}
+
+function galleryDownloadsLabel(value: string | null | undefined): string | null {
+  if (value == null || String(value).trim() === "") return null;
+  const v = String(value).trim();
+  if (/^\d+$/.test(v)) {
+    const n = Number(v);
+    return `${n.toLocaleString()} download${n === 1 ? "" : "s"} available`;
+  }
+  return `${v} available`;
 }
 
 export default function GalleryPage({
@@ -29,6 +44,9 @@ export default function GalleryPage({
 
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [platoonNumber, setPlatoonNumber] = useState<number | null>(null);
+  /** OrderItem download fields for this order + event (from DB). */
+  const [orderItemDownloads, setOrderItemDownloads] =
+    useState<OrderItemDownloads | null>(null);
 
   const apiUrl = `/api/users/gallery?eventId=${eventId}&orderId=${orderId}`;
   const { data, loading, error, fetchApi } = useApi({
@@ -68,6 +86,33 @@ export default function GalleryPage({
       .catch(() => setPlatoonNumber(null));
   }, [orderId]);
 
+  useEffect(() => {
+    if (!orderId || !eventId) {
+      setOrderItemDownloads(null);
+      return;
+    }
+    const token = typeof window !== "undefined"
+      ? localStorage.getItem("token") || sessionStorage.getItem("token")
+      : "";
+    if (!token) {
+      setOrderItemDownloads(null);
+      return;
+    }
+    fetch(
+      `/api/users/orders/item-downloads?orderId=${encodeURIComponent(orderId)}&eventId=${encodeURIComponent(eventId)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.code === 200 && json.data) {
+          setOrderItemDownloads(json.data as OrderItemDownloads);
+        } else {
+          setOrderItemDownloads(null);
+        }
+      })
+      .catch(() => setOrderItemDownloads(null));
+  }, [orderId, eventId]);
+
   if (!eventId) {
     return (
       <>
@@ -95,9 +140,21 @@ export default function GalleryPage({
             </div>
           ) : galleries.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {galleries.map((gallery) => (
+              {galleries.map((gallery) => {
+                const downloadsLabel =
+                  galleryDownloadsLabel(orderItemDownloads?.remainingDownlaod) ??
+                  galleryDownloadsLabel(gallery.numberOfDownlaod);
+                return (
                     <div className="product-card h-auto group" key={gallery.id}>
-                    <div className="product-card-image">
+                    <div className="product-card-image relative overflow-hidden">
+                    {downloadsLabel && (
+                      <span
+                        className="absolute top-2 right-2 z-10 max-w-[calc(100%-1rem)] rounded-md border border-white/15 bg-gray-900/88 px-2.5 py-1 text-center text-[11px] font-semibold leading-tight text-white shadow-md backdrop-blur-sm sm:text-xs"
+                        title={downloadsLabel}
+                      >
+                        {downloadsLabel}
+                      </span>
+                    )}
                     <Image
                       src={gallery.imageUrl || ""}
                       alt={gallery.title}
@@ -111,7 +168,7 @@ export default function GalleryPage({
                         <h3 className="product-card-title line-clamp-2">{gallery.title}</h3>
                     </div>
                     <div className="product-hidden-content flex flex-col gap-2">
-                        <Link href={`/purchase/gallery/${gallery.id}`} className="btn btn-primary w-full flex justify-center items-center gap-2">
+                        <Link href={`/purchase/gallery/${gallery.id}?orderId=${orderId}`} className="btn btn-primary w-full flex justify-center items-center gap-2">
                             <span>Manual Search</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -131,7 +188,8 @@ export default function GalleryPage({
                         )}
                     </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-600">

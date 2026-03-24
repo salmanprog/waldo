@@ -27,11 +27,19 @@ const PER_PAGE = 10;
 export default function EventCategoryFaqList() {
   const [faqs, setFaqs] = useState<EventCategoryFaq[]>([]);
   const [questionSearchQuery, setQuestionSearchQuery] = useState("");
+  const [categoryFilterId, setCategoryFilterId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const deleteModal = useModal();
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const { data, loading, fetchApi } = useApi({
     url: "/api/admin/events/category/faq",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  const { data: categoryList, fetchApi: fetchCategories } = useApi({
+    url: "/api/admin/events/category",
     method: "GET",
     type: "manual",
     requiresAuth: true,
@@ -46,14 +54,21 @@ export default function EventCategoryFaqList() {
     fetchApi();
   }, []);
   useEffect(() => {
+    fetchCategories();
+  }, []);
+  useEffect(() => {
     if (data) setFaqs(data);
   }, [data]);
 
   const filteredFaqs = useMemo(() => {
+    let list = faqs;
     const q = questionSearchQuery.trim().toLowerCase();
-    if (!q) return faqs;
-    return faqs.filter((faq) => (faq.question || "").toLowerCase().includes(q));
-  }, [faqs, questionSearchQuery]);
+    if (q) list = list.filter((faq) => (faq.question || "").toLowerCase().includes(q));
+    if (categoryFilterId) {
+      list = list.filter((faq) => String(faq.eventCategory?.id) === categoryFilterId);
+    }
+    return list;
+  }, [faqs, questionSearchQuery, categoryFilterId]);
 
   const total = filteredFaqs.length;
   const lastPage = Math.ceil(total / PER_PAGE) || 1;
@@ -64,7 +79,7 @@ export default function EventCategoryFaqList() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [questionSearchQuery]);
+  }, [questionSearchQuery, categoryFilterId]);
 
   useEffect(() => {
     if (currentPage > lastPage && lastPage >= 1) setCurrentPage(lastPage);
@@ -171,6 +186,18 @@ export default function EventCategoryFaqList() {
             onChange={(e) => setQuestionSearchQuery(e.target.value)}
             className="h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm text-gray-700 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500"
           />
+          <select
+            value={categoryFilterId}
+            onChange={(e) => setCategoryFilterId(e.target.value)}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm text-gray-700 shadow-theme-xs focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          >
+            <option value="">All Categories</option>
+            {categoryList?.map((cat: { id: number; name: string }) => (
+              <option key={cat.id} value={String(cat.id)}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
           <Link href="/admin/event-category-faq/add">
             <Button>Add Service Category FAQ</Button>
             </Link>

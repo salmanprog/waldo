@@ -24,6 +24,7 @@ export default function EditGallery() {
   // Store gallery event id temporarily (important)
   const [initialEventId, setInitialEventId] = useState<string>("");
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
+  const [numberOfDownlaod, setNumberOfDownlaod] = useState("");
 
   // ---------------- Categories ----------------
   const { data: categoryList, fetchApi: fetchCategories } = useApi({
@@ -103,6 +104,7 @@ export default function EditGallery() {
     if (Array.isArray(gallery.companyIds) && gallery.companyIds.length > 0) {
       setSelectedCompanyIds(gallery.companyIds.map((id: number) => String(id)));
     }
+    setNumberOfDownlaod(gallery.numberOfDownlaod ?? "");
   }, [gallery]);
 
   // ---------------- Fetch events when category changes ----------------
@@ -141,6 +143,7 @@ export default function EditGallery() {
       formData.append("eventCategoryId", eventCategoryId); // slug
       if (eventId) formData.append("eventId", eventId);    // id
       selectedCompanyIds.forEach((id) => formData.append("companyIds", id));
+      formData.append("numberOfDownlaod", numberOfDownlaod);
       formData.append("description", description);
       formData.append("status", status);
       formData.append("is_face_recognition", is_face_recognition);
@@ -251,6 +254,18 @@ export default function EditGallery() {
                 <p className="text-sm text-gray-500 py-2">No companies available.</p>
               )}
             </div>
+          </div>
+
+          {/* Number Of Download */}
+          <div style={{ display: 'none' }}>
+            <label className="block text-sm font-medium mb-2">Number Of Download</label>
+            <input
+              type="text"
+              placeholder="Enter number of download"
+              value={numberOfDownlaod}
+              onChange={(e) => setNumberOfDownlaod(e.target.value)}
+              className="h-11 w-full rounded-lg border px-4"
+            />
           </div>
 
           {/* Description */}

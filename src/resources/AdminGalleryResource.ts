@@ -14,6 +14,7 @@ export type ExtendedGallery = {
   description?: string | null;
   imageUrl?: string | null;
   galleryPath?: string | null;
+  numberOfDownlaod?: string | null;
 
   status: boolean;
 
@@ -61,6 +62,7 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
         : null,
 
       galleryPath: gallery.galleryPath,
+      numberOfDownlaod: gallery.numberOfDownlaod ?? null,
       status: gallery.status,
 
       createdAt: gallery.createdAt,

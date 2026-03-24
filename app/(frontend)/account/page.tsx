@@ -17,7 +17,8 @@ interface AccountUser {
   name: string | null;
   email: string | null;
   mobileNumber?: string | null;
-  platoon?: string | null;
+  categoryId?: string | null;
+  companyId?: string | null;
   imageUrl?: string | null;
   dob?: string | null;
   gender?: string | null;
@@ -38,7 +39,8 @@ export default function AccountPage() {
   const [formData, setFormData] = useState({
     name: "",
     mobileNumber: "",
-    platoon: "",
+    categoryId: "",
+    companyId: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -74,7 +76,8 @@ export default function AccountPage() {
         ...prev,
         name: user.name || "",
         mobileNumber: user.mobileNumber || "",
-        platoon: user.platoon ?? prev.platoon,
+        categoryId: user.categoryId ?? prev.categoryId,
+        companyId: user.companyId ?? prev.companyId,
       }));
       if (user.imageUrl) {
         const normalizedUrl = normalizeImageUrl(user.imageUrl);
@@ -83,7 +86,7 @@ export default function AccountPage() {
     }
   }, [user]);
 
-  // Fetch fresh profile from API when account page loads so platoon (and other DB fields) are shown
+  // Fetch fresh profile from API when account page loads so DB fields (category, company, etc.) are shown
   useEffect(() => {
     if (!user?.id) return;
     setProfileLoaded(false);
@@ -100,7 +103,8 @@ export default function AccountPage() {
           setFormData({
             name: profile.name || "",
             mobileNumber: profile.mobileNumber || "",
-            platoon: profile.platoon ?? "",
+            categoryId: profile.categoryId ?? "",
+            companyId: profile.companyId ?? "",
           });
           if (profile.imageUrl) {
             const normalizedUrl = normalizeImageUrl(profile.imageUrl);
@@ -138,13 +142,32 @@ export default function AccountPage() {
     requiresAuth: true,
   });
 
-  // Fetch fresh profile (including platoon) when account page loads so DB value is shown
+  // Fetch fresh profile when account page loads so DB value is shown
   const { fetchApi: fetchProfile } = useApi({
     url: user ? `/api/users/profile/${user.id}` : "",
     method: "GET",
     type: "manual",
     requiresAuth: true,
   });
+
+  const { data: categoryList, fetchApi: fetchCategories } = useApi({
+    url: "/api/users/events/category",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  const { data: companyList, fetchApi: fetchCompanies } = useApi({
+    url: "/api/users/companies",
+    method: "GET",
+    type: "manual",
+    requiresAuth: true,
+  });
+
+  useEffect(() => {
+    fetchCategories();
+    fetchCompanies();
+  }, []);
 
   const { sendData: sendPasswordData, loading: passwordLoading } = useApi({
     url: "/api/users/password",
@@ -223,7 +246,8 @@ export default function AccountPage() {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
       formDataToSend.append("mobileNumber", formData.mobileNumber || "");
-      formDataToSend.append("platoon", formData.platoon || "");
+      if (formData.categoryId) formDataToSend.append("categoryId", formData.categoryId);
+      if (formData.companyId) formDataToSend.append("companyId", formData.companyId);
 
       // Add image if a new one was selected
       const imageInput = document.getElementById("image") as HTMLInputElement;
@@ -450,9 +474,15 @@ export default function AccountPage() {
                           </p>
                         </div>
                         <div>
-                          <Label>Platoon Number</Label>
+                          <Label>Category</Label>
                           <p className="mt-1 text-gray-900 font-medium">
-                            {user.platoon || "Not set"}
+                            {categoryList?.find((c: { id: number; name: string }) => String(c.id) === String(user?.categoryId ?? formData.categoryId))?.name ?? "Not set"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label>Company</Label>
+                          <p className="mt-1 text-gray-900 font-medium">
+                            {companyList?.find((c: { id: number; name: string }) => String(c.id) === String(user?.companyId ?? formData.companyId))?.name ?? "Not set"}
                           </p>
                         </div>
                       </div>
@@ -552,17 +582,39 @@ export default function AccountPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="platoon">Platoon</Label>
-                        <Input
-                          id="platoon"
-                          name="platoon"
-                          type="text"
-                          value={formData.platoon}
+                        <Label htmlFor="categoryId">Category</Label>
+                        <select
+                          id="categoryId"
+                          name="categoryId"
+                          value={formData.categoryId}
                           onChange={handleInputChange}
-                          error={!!errors.platoon}
-                          hint={errors.platoon}
-                          placeholder="Enter platoon number"
-                        />
+                          className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+                        >
+                          <option value="">-- Select Category --</option>
+                          {categoryList?.map((cat: { id: number; name: string }) => (
+                            <option key={cat.id} value={String(cat.id)}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="companyId">Company</Label>
+                        <select
+                          id="companyId"
+                          name="companyId"
+                          value={formData.companyId}
+                          onChange={handleInputChange}
+                          className="h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+                        >
+                          <option value="">-- Select Company --</option>
+                          {companyList?.map((company: { id: number; name: string }) => (
+                            <option key={company.id} value={String(company.id)}>
+                              {company.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 

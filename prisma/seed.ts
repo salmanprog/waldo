@@ -109,6 +109,7 @@ async function main() {
       description: "You are purchasing photo access to three events at the end of the Plebe Year: War Games, Sea/Trials, and Herndon. You have unlimited downloads from each event as well as any general photographs. Though you will not find photographs of your Plebe in each event, these photographs are a record of the significant events that culminate a long Plebe Year.",
       imageUrl: "",
       price: 29.95,
+      numberOfDownlaod: "20",
       status: true,
     },
     {
@@ -118,6 +119,7 @@ async function main() {
       description: "You are purchasing photo access to the Graduation/Commissioning ceremonies for the Class of 2026. You have unlimited downloads of your graduate as well as the general photographs of the ceremony. With four photographers, there should be multiple photographs of every Grad during processional, handshake, and leaving stage. Perhaps even during the ceremony. Facial Recognition is available but only if you upload photographs for it prior to graduation.",
       imageUrl: "",
       price: 49.95,
+      numberOfDownlaod: "20",
       status: true,
     },
     {
@@ -127,6 +129,7 @@ async function main() {
       description: "With this Manual Search product, you are purchasing access to the galleries to manually search. This works well financially, provided your time is not limited. Purchase includes 200 downloads with the option to purchase more downloads if you wish.",
       imageUrl: "",
       price: 269.95,
+      numberOfDownlaod: "20",
       status: true,
     },
     {
@@ -136,6 +139,7 @@ async function main() {
       description: "This product uses FACE SEARCH (Facial Recognition) to find the photographs. When a photograph of your Plebe is found, an email notification, with link to download the image, is sent to you. With FACE SEARCH, you also have access to MANUAL SEARCH and will need to manually search the galleries to find the photographs FACE SEARCH did not find. Purchasing FACE SEARCH without MANUAL SEARCH is not available. With your purchase of Product 2, you will also receive Waldo News. The Waldo News includes a great deal of information, from what the platoons did during that day and slang, acronyms, anecdotes, a highlighted evolution, and more.",
       imageUrl: "",
       price: 359.95,
+      numberOfDownlaod: "20",
       status: true,
     },
     {
@@ -145,6 +149,7 @@ async function main() {
       description: "The Coffee Table Book, can not be purchased without purchasing Product 1 or 2 above. As you find photographs of your son/daughter on our website, you would save them in your Coffee Table Book gallery. At the end of the summer, you email me to let me know that I can begin to work on your book.",
       imageUrl: "",
       price: 699.96,
+      numberOfDownlaod: "0",
       status: true,
     },
   ];

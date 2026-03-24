@@ -267,10 +267,6 @@ export default function UserDetailsPage() {
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Address</label>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90 mt-1">{user.address || "N/A"}</p>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Platoon</label>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90 mt-1">{user.platoon || "N/A"}</p>
-              </div>
             </div>
           </div>
         </div>

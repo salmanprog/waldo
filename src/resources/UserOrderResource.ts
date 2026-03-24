@@ -1,6 +1,5 @@
 import BaseResource from "@/resources/BaseResource";
 import { Order, OrderItem, User } from "@prisma/client";
-import { title } from "process";
 
 // Extend Order type with relations
 export type ExtendedOrder = Order & {
@@ -36,6 +35,9 @@ export default class UserOrderResource extends BaseResource<ExtendedOrder> {
         title: item.title,
         quantity: item.quantity,
         price: item.price,
+        totalnumberOfDownlaod: item.totalnumberOfDownlaod ?? null,
+        totalDownlaod: item.totalDownlaod ?? null,
+        remainingDownlaod: item.remainingDownlaod ?? null,
       })) ?? [],
 
       createdAt: order.createdAt,
