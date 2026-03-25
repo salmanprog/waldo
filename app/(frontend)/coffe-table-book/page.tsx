@@ -43,7 +43,7 @@ function CoffeeTableBookContent() {
     if (coffeePackageQuery === "success") {
       fetchFavourites();
     }
-    // fetchFavourites from useApi is a new function every render; including it causes an infinite loop.
+    // fetchFavourites from useApi is a new function every render; including it causes an infinite loops.
   }, [coffeePackageQuery]);
 
   useEffect(() => {
