@@ -34,7 +34,12 @@ export async function GET(req: Request) {
 
     const favourites = await prisma.favouriteImagesCoffeBook.findMany({
       where,
-      select: { id: true, galleryImageId: true, galleryImagePath: true },
+      select: {
+        id: true,
+        galleryImageId: true,
+        galleryImagePath: true,
+        purchase_package: true,
+      },
     });
 
     return NextResponse.json({ code: 200, message: "OK", data: favourites });

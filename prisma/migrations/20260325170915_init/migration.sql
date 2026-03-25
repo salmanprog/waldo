@@ -226,12 +226,14 @@ CREATE TABLE `media` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `orderType` VARCHAR(191) NULL DEFAULT 'package_purchase',
     `platoonNumber` INTEGER NOT NULL,
     `stripeSessionId` VARCHAR(191) NOT NULL,
     `totalnumberOfDownlaod` VARCHAR(255) NULL,
     `totalDownlaod` VARCHAR(255) NULL,
     `remainingDownlaod` VARCHAR(255) NULL,
     `total` DECIMAL(10, 2) NOT NULL,
+    `packageUsed` BOOLEAN NOT NULL DEFAULT true,
     `status` ENUM('PENDING', 'PAID', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
     `purchaseDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -330,6 +332,7 @@ CREATE TABLE `favourite_images_coffe_book` (
     `userId` INTEGER NOT NULL,
     `gallery_image_id` INTEGER NOT NULL,
     `gallery_image_path` TEXT NOT NULL,
+    `purchase_package` BOOLEAN NOT NULL DEFAULT false,
 
     INDEX `favourite_images_coffe_book_userId_idx`(`userId`),
     INDEX `favourite_images_coffe_book_gallery_image_id_idx`(`gallery_image_id`),

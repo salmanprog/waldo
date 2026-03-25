@@ -8,6 +8,28 @@ import useApi from "@/utils/useApi";
 const MAX_IMAGES = 5;
 const PAGE_SIZE = 20;
 
+async function sendGalleryUploadEmailToPurchasers(galleryIdStr: string) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+      : "";
+  if (!token) return;
+  const gid = Number(galleryIdStr);
+  if (Number.isNaN(gid) || gid < 1) return;
+  try {
+    await fetch("/api/admin/gallery-items/notify-purchasers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ galleryId: gid }),
+    });
+  } catch (e) {
+    console.error("notify purchasers email:", e);
+  }
+}
+
 export default function AddGalleryImages() {
   const router = useRouter();
   const params = useParams();
@@ -159,6 +181,7 @@ export default function AddGalleryImages() {
         setImages([]);
         setVisibleCount(PAGE_SIZE);
         fetchGalleryItems(); // refresh grid
+        void sendGalleryUploadEmailToPurchasers(galleryId);
       } else {
         setErrorMsg(res?.message || "Upload failed");
       }

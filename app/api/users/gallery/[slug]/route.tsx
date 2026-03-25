@@ -49,6 +49,7 @@ export async function GET(
         title: true,
         face_recognition_heading: true,
         is_face_recognition: true,
+        is_coff_book: true,
         galleryPath: true,
       },
     });
@@ -69,6 +70,7 @@ export async function GET(
         title: gallery.title,
         face_recognition_heading: gallery.face_recognition_heading ?? null,
         is_face_recognition: gallery.is_face_recognition,
+        is_coff_book: gallery.is_coff_book ?? false,
         galleryPath: gallery.galleryPath,
       },
     });

@@ -8,6 +8,8 @@ import UserCoffeeTableBookResource from "@/resources/UserCoffeeTableBookResource
 import { storeCoffeeTableBook, updateCoffeeTableBook } from "@/validators/coffeeTableBook.validation";
 import { generateSlug } from "@/utils/slug";
 import type { ExtendedCoffeeTableBook } from "@/resources/UserCoffeeTableBookResource";
+import { getUserByToken } from "@/utils/token";
+import { verifyToken } from "@/utils/jwt";
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -51,6 +53,22 @@ export default class UserCoffeeTableBookController extends RestController<
       const base = `${d.firstName ?? ""}-${d.lastName ?? ""}-${Date.now()}`;
       d.slug = await generateSlug("coffeeTableBook" as any, base);
     }
+  }
+
+  /** API routes often omit x-current-user; JWT Bearer matches other /api/users handlers. */
+  private async resolveSubmitterUserId(): Promise<number | null> {
+    const headerUser = this.getCurrentUser() as { id?: number } | null;
+    if (headerUser?.id != null) return Number(headerUser.id);
+
+    const auth = this.__request?.headers?.get?.("Authorization");
+    const token = auth?.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return null;
+
+    const decoded = await verifyToken(token);
+    if (!decoded || typeof decoded === "string") return null;
+
+    const user = await getUserByToken(token);
+    return user?.id != null ? Number(user.id) : null;
   }
 
   async store(data?: Partial<ExtendedCoffeeTableBook>): Promise<NextResponse> {
@@ -128,6 +146,13 @@ export default class UserCoffeeTableBookController extends RestController<
             },
           });
         }
+      }
+
+      const submitterId = await this.resolveSubmitterUserId();
+      if (submitterId != null) {
+        await prisma.favouriteImagesCoffeBook.deleteMany({
+          where: { userId: submitterId },
+        });
       }
 
       return this.__sendResponse(

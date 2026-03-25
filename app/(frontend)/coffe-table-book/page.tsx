@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import InnerBanner from "@/components/common/InnerBanner";
 import useApi, { ApiResponse } from "@/utils/useApi";
 import Input from "@/components/form/input/InputField";
@@ -12,10 +13,12 @@ interface FavouriteImage {
   id: number;
   galleryImageId: number;
   galleryImagePath: string;
+  purchase_package?: boolean;
 }
 
-export default function CoffeeTableBookPage() {
+function CoffeeTableBookContent() {
   const { user: currentUser } = useCurrentUser();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     document.title = "My Waldo | Coffee Table Book";
@@ -34,11 +37,54 @@ export default function CoffeeTableBookPage() {
     fetchFavourites();
   }, []);
 
+  const coffeePackageQuery = searchParams.get("coffeePackage");
+
+  useEffect(() => {
+    if (coffeePackageQuery === "success") {
+      fetchFavourites();
+    }
+    // fetchFavourites from useApi is a new function every render; including it causes an infinite loop.
+  }, [coffeePackageQuery]);
+
   useEffect(() => {
     if (favouritesData && Array.isArray(favouritesData)) {
       setFavouriteImages(favouritesData as FavouriteImage[]);
     }
   }, [favouritesData]);
+
+  const needsCoffeeTablePackagePurchase = useMemo(() => {
+    if (favouriteImages.length <= 1) return false;
+    const hasPackage = favouriteImages.some((img) => img.purchase_package === true);
+    return !hasPackage;
+  }, [favouriteImages]);
+
+  const [buyLoading, setBuyLoading] = useState(false);
+
+  const goToStripeCoffeePackageCheckout = async () => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+        : "";
+    if (!token) return;
+    setBuyLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/users/checkout/coffee-table-package", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.assign(data.url);
+      } else {
+        setErrorMsg(data.error || "Could not open Stripe checkout.");
+        setBuyLoading(false);
+      }
+    } catch {
+      setErrorMsg("Could not open Stripe checkout.");
+      setBuyLoading(false);
+    }
+  };
 
   const [form, setForm] = useState({
     firstName: "",
@@ -86,6 +132,10 @@ export default function CoffeeTableBookPage() {
       newErrors.email = "Invalid email format";
     }
     if (favouriteImages.length === 0) newErrors.images = "Add at least one image from your gallery";
+    if (needsCoffeeTablePackagePurchase) {
+      newErrors.images =
+        "If you have added more than 50 images to your coffee table book, you need to purchase a package.";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,6 +166,13 @@ export default function CoffeeTableBookPage() {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
+
+    if (needsCoffeeTablePackagePurchase) {
+      setErrorMsg(
+        "If you have added more than 50 images to your coffee table book, you need to purchase a package."
+      );
+      return;
+    }
 
     if (!validateForm()) return;
 
@@ -187,6 +244,22 @@ export default function CoffeeTableBookPage() {
                       </div>
                     ))}
                   </div>
+                  {needsCoffeeTablePackagePurchase && (
+                    <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <p className="mb-3 font-medium">
+                        If you have added more than 50 images to your coffee table book, you need to
+                        purchase a package.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={goToStripeCoffeePackageCheckout}
+                        disabled={buyLoading}
+                        className="btn btn-primary inline-flex items-center justify-center px-5 py-2.5 font-semibold disabled:opacity-50"
+                      >
+                        {buyLoading ? "Opening checkout…" : "Buy"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -269,7 +342,12 @@ export default function CoffeeTableBookPage() {
                   <p className="text-xs text-red-500">{errors.images}</p>
                 )}
 
-                <Button type="submit" loading={loading} className="w-full">
+                <Button
+                  type="submit"
+                  loading={loading}
+                  disabled={needsCoffeeTablePackagePurchase}
+                  className="w-full"
+                >
                   Submit Request
                 </Button>
               </form>
@@ -278,5 +356,19 @@ export default function CoffeeTableBookPage() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function CoffeeTableBookPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[50vh] flex items-center justify-center">
+          <p className="text-gray-500">Loading…</p>
+        </div>
+      }
+    >
+      <CoffeeTableBookContent />
+    </Suspense>
   );
 }

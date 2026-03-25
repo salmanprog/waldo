@@ -245,12 +245,14 @@ model Media {
 model Order {
   id              Int         @id @default(autoincrement())
   userId          Int
+  orderType       String?    @default("package_purchase")
   platoonNumber          Int
   stripeSessionId String      @unique
   totalnumberOfDownlaod String?   @db.VarChar(255)
   totalDownlaod String?   @db.VarChar(255)
   remainingDownlaod String?   @db.VarChar(255)
   total           Decimal     @db.Decimal(10,2)
+  packageUsed     Boolean   @default(true)
   status          OrderStatus @default(PENDING)
   purchaseDate    DateTime    @default(now())
 
@@ -360,7 +362,7 @@ model FavouriteImagesCoffeBook {
   userId           Int
   galleryImageId   Int    @map("gallery_image_id")
   galleryImagePath String @map("gallery_image_path") @db.Text
-
+  purchase_package Boolean   @default(false)
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   galleryItem GalleryItem @relation(fields: [galleryImageId], references: [id], onDelete: Cascade)
 

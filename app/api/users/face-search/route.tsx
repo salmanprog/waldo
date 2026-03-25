@@ -3,6 +3,7 @@ import path from 'path'
 import { NextResponse } from 'next/server'
 import * as faceapi from 'face-api.js'
 import * as canvas from 'canvas'
+import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
 
@@ -67,9 +68,13 @@ type FaceIndexEntry = {
   desc: number[]
 }
 
-type FaceSearchResult = {
+type FaceMatch = {
   image: string
   similarity: number
+}
+
+type FaceSearchResult = FaceMatch & {
+  galleryImageId: number | null
 }
 
 // In-memory index cache (no disk read per search)
@@ -244,7 +249,7 @@ export async function POST(request: Request) {
     // ─────────────────────────────
     // Compare descriptors (FAST)
     // ─────────────────────────────
-    const results: FaceSearchResult[] = []
+    const results: FaceMatch[] = []
 
     for (const entry of index) {
       const distance = faceapi.euclideanDistance(
@@ -265,13 +270,35 @@ export async function POST(request: Request) {
 
     results.sort((a, b) => b.similarity - a.similarity)
 
+    const uniquePaths = [...new Set(results.map((r) => r.image))]
+    const idByPath = new Map<string, number>()
+    if (uniquePaths.length > 0) {
+      const rows = await prisma.galleryItem.findMany({
+        where: {
+          deletedAt: null,
+          status: true,
+          imageUrl: { in: uniquePaths },
+        },
+        select: { id: true, imageUrl: true },
+      })
+      for (const row of rows) {
+        idByPath.set(row.imageUrl, row.id)
+      }
+    }
+
+    const resultsWithIds: FaceSearchResult[] = results.map((r) => ({
+      image: r.image,
+      similarity: r.similarity,
+      galleryImageId: idByPath.get(r.image) ?? null,
+    }))
+
     console.log(
       `⚡ Face search (${gallery}) in ${Date.now() - startTime}ms`
     )
 
     // Include notification contact when matches found (for future notification service)
     const notificationContact =
-      results.length > 0 && (notificationEmail || notificationPhone)
+      resultsWithIds.length > 0 && (notificationEmail || notificationPhone)
         ? { email: notificationEmail, phone: notificationPhone }
         : undefined
 
@@ -279,7 +306,7 @@ export async function POST(request: Request) {
       code: 200,
       message: 'success',
       data: {
-        results,
+        results: resultsWithIds,
         ...(notificationContact && { notificationContact }),
       },
     })

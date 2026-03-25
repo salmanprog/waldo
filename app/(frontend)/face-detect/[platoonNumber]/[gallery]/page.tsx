@@ -1,7 +1,8 @@
 'use client'
 
-import { use, useState, useEffect, useRef } from 'react'
+import { use, useState, useEffect, useRef, useCallback } from 'react'
 import InnerBanner from '@/components/common/InnerBanner'
+import useApi from '@/utils/useApi'
 
 const SEARCH_STEPS = [
   'Detecting face…',
@@ -13,6 +14,13 @@ const SEARCH_STEPS = [
 type FaceResult = {
   image: string
   similarity: number
+  galleryImageId?: number | null
+}
+
+interface FavouriteItem {
+  id: number
+  galleryImageId: number
+  galleryImagePath: string
 }
 
 type Angle = 'frontal' | 'threeQuarter' | 'profile'
@@ -62,6 +70,16 @@ export default function FaceSearch({
   const [notifyVia, setNotifyVia] = useState<'email' | 'phone'>('email')
   const [searchStepIndex, setSearchStepIndex] = useState(0)
   const [faceRecognitionHeading, setFaceRecognitionHeading] = useState<string | null>(null)
+  const [isCoffBook, setIsCoffBook] = useState(false)
+  const [favouriteIds, setFavouriteIds] = useState<Set<number>>(new Set())
+
+  const { data: favouritesData, fetchApi: fetchFavourites } = useApi({
+    url: '/api/users/favourite-images-coffe-book',
+    method: 'GET',
+    type: 'manual',
+    requiresAuth: true,
+  })
+
   const fileInputRefs = useRef<Record<Angle, HTMLInputElement | null>>({
     frontal: null,
     threeQuarter: null,
@@ -168,13 +186,20 @@ export default function FaceSearch({
         const list = await runSearchForFile(uploads[angle].file!)
         allResults.push(...list)
       }
-      const byImage = new Map<string, number>()
+      const byImage = new Map<string, { similarity: number; galleryImageId: number | null }>()
       for (const r of allResults) {
-        const current = byImage.get(r.image)
-        if (current == null || r.similarity > current) byImage.set(r.image, r.similarity)
+        const cur = byImage.get(r.image)
+        const gid = r.galleryImageId ?? null
+        if (cur == null || r.similarity > cur.similarity) {
+          byImage.set(r.image, { similarity: r.similarity, galleryImageId: gid })
+        }
       }
       const merged = Array.from(byImage.entries())
-        .map(([image, similarity]) => ({ image, similarity }))
+        .map(([image, { similarity, galleryImageId }]) => ({
+          image,
+          similarity,
+          galleryImageId,
+        }))
         .sort((a, b) => b.similarity - a.similarity)
       setResults(merged)
     } catch (err) {
@@ -194,6 +219,18 @@ export default function FaceSearch({
   }, [])
 
   useEffect(() => {
+    fetchFavourites()
+  }, [gallery])
+
+  useEffect(() => {
+    if (favouritesData && Array.isArray(favouritesData)) {
+      setFavouriteIds(
+        new Set((favouritesData as FavouriteItem[]).map((f) => f.galleryImageId))
+      )
+    }
+  }, [favouritesData])
+
+  useEffect(() => {
     if (!gallery) return
     const token =
       typeof window !== 'undefined'
@@ -205,12 +242,64 @@ export default function FaceSearch({
     })
       .then((r) => r.json())
       .then((json) => {
-        if (json.code === 200 && json.data?.face_recognition_heading) {
-          setFaceRecognitionHeading(json.data.face_recognition_heading)
+        if (json.code === 200 && json.data) {
+          if (json.data.face_recognition_heading) {
+            setFaceRecognitionHeading(json.data.face_recognition_heading)
+          }
+          setIsCoffBook(!!json.data.is_coff_book)
         }
       })
       .catch(() => {})
   }, [gallery])
+
+  const toggleFavourite = useCallback(
+    async (galleryImageId: number, galleryImagePath: string) => {
+      const isFavourited = favouriteIds.has(galleryImageId)
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('token') || sessionStorage.getItem('token') || ''
+          : ''
+
+      try {
+        if (isFavourited) {
+          const res = await fetch(
+            `/api/users/favourite-images-coffe-book?galleryImageId=${galleryImageId}`,
+            {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+          const json = await res.json()
+          if (json.code === 200) {
+            setFavouriteIds((prev) => {
+              const next = new Set(prev)
+              next.delete(galleryImageId)
+              return next
+            })
+          }
+        } else {
+          const res = await fetch('/api/users/favourite-images-coffe-book', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              galleryImageId,
+              galleryImagePath: galleryImagePath || '',
+            }),
+          })
+          const json = await res.json()
+          if (json.code === 200) {
+            setFavouriteIds((prev) => new Set([...prev, galleryImageId]))
+          }
+        }
+      } catch (err) {
+        console.error('Toggle favourite error:', err)
+      }
+    },
+    [favouriteIds]
+  )
 
   useEffect(() => {
     if (!loading) setSearchStepIndex(0)
@@ -398,6 +487,35 @@ export default function FaceSearch({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
                               </svg>
                             </a>
+                            {isCoffBook && r.galleryImageId != null && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleFavourite(r.galleryImageId!, r.image)
+                                }
+                                className={`btn w-full flex justify-center items-center gap-2 text-sm py-2 ${
+                                  favouriteIds.has(r.galleryImageId)
+                                    ? 'btn-secondary'
+                                    : 'btn-primary'
+                                }`}
+                              >
+                                {favouriteIds.has(r.galleryImageId) ? (
+                                  <>
+                                    <span>Remove from coffee table book</span>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Add to coffee table book</span>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}

@@ -69,6 +69,17 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     console.log("session------------------------------", session);
     try {
+      if (session.metadata?.checkoutType === "coffee_table_extra_package") {
+        const uid = Number(session.metadata?.userId);
+        if (uid) {
+          await prisma.favouriteImagesCoffeBook.updateMany({
+            where: { userId: uid },
+            data: { purchase_package: true } as { purchase_package: boolean },
+          });
+        }
+        return NextResponse.json({ received: true });
+      }
+
       const userId = Number(session.metadata?.userId);
       const cart = JSON.parse(session.metadata?.cart || "[]");
       if (!userId || !Array.isArray(cart) || cart.length === 0) {
@@ -105,6 +116,8 @@ export async function POST(req: Request) {
       await prisma.order.create({
         data: {
           userId,
+          orderType: "package_purchase",
+          packageUsed: true,
           platoonNumber: 0,
           stripeSessionId: session.id,
           total: Number(session.amount_total ?? 0) / 100,
@@ -113,7 +126,7 @@ export async function POST(req: Request) {
           items: {
             create: orderItems,
           },
-        },
+        } as import("@prisma/client").Prisma.OrderUncheckedCreateInput,
       });
     } catch (err) {
       console.error("Database error:", err);
