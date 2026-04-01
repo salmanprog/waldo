@@ -91,6 +91,13 @@ const navItems: NavItem[] = [
       { name: 'Waldo News', path: '/admin/blog/', pro: false }
     ],
   },
+  {
+    icon: FolderOpen,
+    name: 'Pages',
+    subItems: [
+      { name: 'Pages', path: '/admin/pages/', pro: false },
+    ],
+  },
   // {
   //   name: 'Forms',
   //   icon: List,

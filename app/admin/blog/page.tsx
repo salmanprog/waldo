@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState, useMemo } from "react";
+import DataTable, {
+  type DataTableColumn,
+} from "@/components/ui/datatable/DataTable";
 import Link from "next/link";
 import Button from "@/components/ui/button/Button";
 import useApi from "@/utils/useApi";
@@ -23,6 +25,7 @@ interface Blog {
 
 export default function BlogList() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [titleSearch, setTitleSearch] = useState("");
   const deleteModal = useModal();
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const { data, loading, fetchApi } = useApi({
@@ -43,6 +46,13 @@ export default function BlogList() {
   useEffect(() => {
     if (data) setBlogs(data);
   }, [data]);
+
+  const filteredBlogs = useMemo(() => {
+    const q = titleSearch.trim().toLowerCase();
+    if (!q) return blogs;
+    return blogs.filter((blog) => blog.title.toLowerCase().includes(q));
+  }, [blogs, titleSearch]);
+
   const handleDelete = async () => {
     if (!deleteSlug) return;
 
@@ -54,6 +64,94 @@ export default function BlogList() {
     setDeleteSlug(null);
     fetchApi(); // refresh table
   };
+
+  const columns: DataTableColumn<Blog>[] = [
+    {
+      header: "ID",
+      sortable: true,
+      sortValue: (blog) => blog.id,
+      cellClassName: "py-3",
+      cell: (blog) => (
+        <div className="flex items-center gap-3">
+          <div className="h-[50px] w-[50px] overflow-hidden rounded-md flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            {blog.id}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Image",
+      sortable: true,
+      sortValue: (blog) => (blog.imageUrl || "").toLowerCase(),
+      cellClassName: "py-3",
+      cell: (blog) =>
+        blog.imageUrl ? (
+          <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
+            <Image
+              src={blog.imageUrl}
+              alt={blog.title}
+              width={50}
+              height={50}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div className="h-[50px] w-[50px] overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <span className="text-xs text-gray-500">No Image</span>
+          </div>
+        ),
+    },
+    {
+      header: "Title",
+      sortable: true,
+      sortValue: (blog) => blog.title.toLowerCase(),
+      cell: (blog) => blog.title,
+    },
+    {
+      header: "Slug",
+      sortable: true,
+      sortValue: (blog) => (blog.slug || "").toLowerCase(),
+      cell: (blog) => (
+        <div className="max-w-xs truncate" title={blog.slug || ""}>
+          {blog.slug || "N/A"}
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      sortable: true,
+      sortValue: (blog) => (blog.status ? 1 : 0),
+      cell: (blog) => (
+        <Badge
+          size="sm"
+          color={
+            blog.status === true
+              ? "success"
+              : blog.status === false
+              ? "warning"
+              : "error"
+          }
+        >
+          {blog.status === true ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    {
+      header: "Action",
+      cellClassName: "py-3 text-center",
+      cell: (blog) => (
+        <ActionMenu
+          editUrl={`/admin/blog/edit/${blog.slug}`}
+          onDelete={() => {
+            setDeleteSlug(blog.slug);
+            deleteModal.openModal();
+          }}
+        />
+      ),
+    },
+  ];
+
   return (
     <>
       {/* DELETE CONFIRMATION MODAL */}
@@ -95,7 +193,16 @@ export default function BlogList() {
             Waldo News
           </h3>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={titleSearch}
+              onChange={(e) => setTitleSearch(e.target.value)}
+              className="h-10 w-full min-w-[200px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-theme-sm text-gray-700 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 sm:w-64"
+            />
+          </div>
           {/* <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             <svg
               className="stroke-current fill-white dark:fill-gray-800"
@@ -143,127 +250,14 @@ export default function BlogList() {
         </div>
       </div>
       <div className="max-w-full overflow-x-auto">
-        <Table>
-          {/* Table Header */}
-          <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                ID
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Image
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Title
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Slug
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Status
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Action
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-
-          {/* Table Body */}
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-gray-500">
-                  Loading Waldo News...
-                </TableCell>
-              </TableRow>
-            ) : blogs.length > 0 ? (
-              blogs.map((blog) => (
-                <TableRow key={blog.id} className="">
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-[50px] w-[50px] overflow-hidden rounded-md flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                        {blog.id}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    {blog.imageUrl ? (
-                      <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                        <Image
-                          src={blog.imageUrl}
-                          alt={blog.title}
-                          width={50}
-                          height={50}
-                          className="object-cover w-full h-full"
-                          unoptimized
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-[50px] w-[50px] overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <span className="text-xs text-gray-500">No Image</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {blog.title}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    <div className="max-w-xs truncate" title={blog.slug || ""}>
-                      {blog.slug || "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    <Badge
-                      size="sm"
-                      color={
-                        blog.status === true
-                          ? "success"
-                          : blog.status === false
-                          ? "warning"
-                          : "error"
-                      }
-                    >
-                      {blog.status === true ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3 text-center">
-                <ActionMenu
-                    editUrl={`/admin/blog/edit/${blog.slug}`}
-                    onDelete={() => {
-                      setDeleteSlug(blog.slug);
-                      deleteModal.openModal();
-                    }}
-                  />
-                </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-gray-500">
-                  No Waldo News found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable<Blog>
+          columns={columns}
+          data={filteredBlogs}
+          getRowKey={(blog) => blog.id}
+          loading={loading}
+          loadingMessage="Loading Waldo News..."
+          emptyMessage="No Waldo News found."
+        />
       </div>
     </div>
     </>

@@ -18,6 +18,7 @@ const protectedApiRoutes = [
   { path: "/api/admin/events/category", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/events/category/faq", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/blog", methods: ["POST", "PATCH", "DELETE"] },
+  { path: "/api/admin/pages", methods: ["POST", "PATCH", "DELETE"] },
   { path: "/api/admin/blog-category", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/companies", methods: ["POST", "GET", "PATCH", "DELETE"] },
   { path: "/api/admin/events", methods: ["POST", "GET", "PATCH", "DELETE"] },

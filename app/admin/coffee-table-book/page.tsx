@@ -1,13 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import Link from "next/link";
-import Button from "@/components/ui/button/Button";
+import DataTable, {
+  type DataTableColumn,
+} from "@/components/ui/datatable/DataTable";
 import useApi from "@/utils/useApi";
-import Badge from "@/components/ui/badge/Badge";
 import ActionMenu from "@/components/ui/dropdown/ActionMenu";
 import { Modal } from "@/components/ui/modal";
 import { useModal } from "@/hooks/useModal";
+
+interface CoffeeTableBookImageRow {
+  id: number;
+  coffeTableBookId: number;
+  imageUrl: string;
+}
 
 interface CoffeeTableBook {
   id: number;
@@ -17,6 +22,7 @@ interface CoffeeTableBook {
   email: string;
   phone: string | null;
   address: string | null;
+  images?: CoffeeTableBookImageRow[];
 }
 
 export default function CoffeeTableBookList() {
@@ -56,6 +62,60 @@ export default function CoffeeTableBookList() {
     setDeleteId(null);
     fetchApi(); // refresh table
   };
+
+  const columns: DataTableColumn<CoffeeTableBook>[] = [
+    {
+      header: "ID",
+      sortable: true,
+      sortValue: (book) => book.id,
+      cellClassName: "py-3",
+      cell: (book) => (
+        <div className="flex items-center gap-3">
+          <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
+            {book.id}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Name",
+      sortable: true,
+      sortValue: (book) => `${book.firstName} ${book.lastName}`.toLowerCase(),
+      cell: (book) => (
+        <>
+          {book.firstName} {book.lastName}
+        </>
+      ),
+    },
+    {
+      header: "Email",
+      sortable: true,
+      sortValue: (book) => (book.email || "").toLowerCase(),
+      cell: (book) => book.email,
+    },
+    {
+      header: "Phone",
+      sortable: true,
+      sortValue: (book) => (book.phone || "").toLowerCase(),
+      cell: (book) => book.phone || "N/A",
+    },
+    {
+      header: "No. of Images",
+      sortable: true,
+      sortValue: (book) => book.images?.length ?? 0,
+      cell: (book) => String(book.images?.length ?? 0),
+    },
+    {
+      header: "Action",
+      cellClassName: "py-3 text-center",
+      cell: (book) => (
+        <ActionMenu
+          viewUrl={`/admin/coffee-table-book/view/${book.id}`}
+        />
+      ),
+    },
+  ];
+
   return (
     <>
       {/* DELETE CONFIRMATION MODAL */}
@@ -99,73 +159,14 @@ export default function CoffeeTableBookList() {
         </div>
       </div>
       <div className="max-w-full overflow-x-auto">
-        <Table>
-          {/* Table Header */}
-          <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                ID
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Name
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Email
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Phone
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Action
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-
-          {/* Table Body */}
-
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {coffeeTableBooks.map((book) => (
-              <TableRow key={book.id} className="">
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                      {book.id}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {book.firstName} {book.lastName}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {book.email}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {book.phone || "N/A"}
-                </TableCell>
-                <TableCell className="py-3 text-center">
-                <ActionMenu
-                    viewUrl={`/admin/coffee-table-book/view/${book.id}`}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable<CoffeeTableBook>
+          columns={columns}
+          data={coffeeTableBooks}
+          getRowKey={(book) => book.id}
+          loading={loading}
+          loadingMessage="Loading entries..."
+          emptyMessage="No coffee table book entries found."
+        />
       </div>
     </div>
     </>

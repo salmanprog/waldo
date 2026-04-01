@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import DataTable, {
+  type DataTableColumn,
+} from "../ui/datatable/DataTable";
 import Badge from "../ui/badge/Badge";
 import useApi from "@/utils/useApi";
 import Link from "next/link";
@@ -75,6 +71,61 @@ export default function RecentOrders() {
     return "error";
   };
 
+  const columns: DataTableColumn<Order>[] = [
+    {
+      header: "Order ID",
+      cellClassName:
+        "py-3 font-medium text-gray-800 text-theme-sm dark:text-white/90",
+      sortable: true,
+      sortValue: (order) => order.id,
+      cell: (order) => `#${order.id}`,
+    },
+    {
+      header: "User",
+      sortable: true,
+      sortValue: (order) => order.user?.name ?? "",
+      cell: (order) => (
+        <div>
+          {order.user?.name && (
+            <Link
+              href={`/admin/users/${order.user.slug}`}
+              className="text-brand-500 hover:underline"
+            >
+              {order.user.name}
+            </Link>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "Total",
+      sortable: true,
+      sortValue: (order) => Number(order.total),
+      cell: (order) => `$${Number(order.total).toFixed(2)}`,
+    },
+    {
+      header: "Date",
+      sortable: true,
+      sortValue: (order) => new Date(order.purchaseDate),
+      cell: (order) =>
+        new Date(order.purchaseDate).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+    },
+    {
+      header: "Status",
+      sortable: true,
+      sortValue: (order) => order.status,
+      cell: (order) => (
+        <Badge size="sm" color={badgeColor(order.status)}>
+          {order.status}
+        </Badge>
+      ),
+    },
+  ];
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -85,98 +136,14 @@ export default function RecentOrders() {
         </div>
       </div>
       <div className="max-w-full overflow-x-auto">
-        <Table>
-          <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-            <TableRow>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Order ID
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                User / Platoon
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Total
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Date
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Status
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-gray-500">
-                  Loading orders...
-                </TableCell>
-              </TableRow>
-            ) : orders.length > 0 ? (
-              orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="py-3 font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                    #{order.id}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    <div>
-                      {order.user?.name && (
-                        <Link
-                          href={`/admin/users/${order.user.slug}`}
-                          className="text-brand-500 hover:underline"
-                        >
-                          {order.user.name}
-                        </Link>
-                      )}
-                      {order.user?.name && order.platoonNumber != null && " · "}
-                      {order.platoonNumber != null && (
-                        <span>Platoon {order.platoonNumber}</span>
-                      )}
-                      {!order.user?.name && order.platoonNumber == null && "—"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    ${Number(order.total).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {new Date(order.purchaseDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    <Badge size="sm" color={badgeColor(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-gray-500">
-                  No orders found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable<Order>
+          columns={columns}
+          data={orders}
+          getRowKey={(order) => order.id}
+          loading={loading}
+          loadingMessage="Loading orders..."
+          emptyMessage="No orders found."
+        />
       </div>
 
       {meta && meta.lastPage > 1 && (

@@ -194,6 +194,7 @@ model Blog {
   slug             String       @unique @db.VarChar(255)
   description      String?      @db.Text
   imageUrl         String?      @db.Text
+  publish_date     String       @db.VarChar(255)
   seoTitle         String?      @db.VarChar(255)
   seoDescription   String?      @db.Text
   status           Boolean      @default(true)
@@ -207,6 +208,23 @@ model Blog {
   @@index([title])
   @@index([blogCategoryId])
   @@map("blog")
+}
+
+model Pages {
+  id               Int          @id @default(autoincrement())
+  title            String       @db.VarChar(255)
+  slug             String       @unique @db.VarChar(255)
+  description      String?      @db.Text
+  imageUrl         String?      @db.Text
+  seoTitle         String?      @db.VarChar(255)
+  seoDescription   String?      @db.Text
+  status           Boolean      @default(true)
+  createdAt        DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?   @db.Timestamp(6)
+  
+  @@index([title])
+  @@map("pages")
 }
 
 model Company {

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Button from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import useApi from "@/utils/useApi";
@@ -14,6 +14,7 @@ export default function AddBlog() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [publishDate, setPublishDate] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -21,6 +22,30 @@ export default function AddBlog() {
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const minPublishDate = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }, []);
+
+  const publishDateInputRef = useRef<HTMLInputElement>(null);
+
+  const openPublishDatePicker = () => {
+    const el = publishDateInputRef.current;
+    if (!el) return;
+    try {
+      if (typeof el.showPicker === "function") {
+        el.showPicker();
+      } else {
+        el.focus();
+      }
+    } catch {
+      el.focus();
+    }
+  };
 
   const { data: categoriesData, fetchApi: fetchCategories } = useApi({
     url: "/api/admin/blog-category",
@@ -62,6 +87,7 @@ export default function AddBlog() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("publish_date", publishDate);
       formData.append("seoTitle", seoTitle);
       formData.append("seoDescription", seoDescription);
       formData.append("status", status);
@@ -180,6 +206,24 @@ export default function AddBlog() {
                 bg-transparent border-gray-300 focus:border-brand-300
                 dark:bg-gray-900 dark:text-white dark:border-gray-700"
               ></textarea>
+            </div>
+
+            {/* Publish Date (value stored as YYYY-MM-DD) */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Publish Date
+              </label>
+              <input
+                ref={publishDateInputRef}
+                type="date"
+                min={minPublishDate}
+                value={publishDate}
+                onChange={(e) => setPublishDate(e.target.value)}
+                onClick={openPublishDatePicker}
+                className="h-11 w-full cursor-pointer rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
+                bg-transparent border-gray-300 focus:border-brand-300
+                dark:bg-gray-900 dark:text-white dark:border-gray-700 dark:[color-scheme:dark]"
+              />
             </div>
 
             {/* SEO Title */}

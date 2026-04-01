@@ -12,7 +12,7 @@ export async function GET(
     const controller = new AdminBlogController(_req);
     const slug = params.slug;
     return await controller.showSlug(String(slug));
-  } catch (error: unknown) {
+  } catch (error: unknown) { 
     return NextResponse.json(
       { code: 500, message: "Internal Server Error", error: (error as Error).message },
       { status: 500 }

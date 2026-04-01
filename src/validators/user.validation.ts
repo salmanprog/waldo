@@ -88,12 +88,28 @@ export const updateEventCategoryFaq = yup.object({
 export const storeBlog = yup.object({
   title: yup.string().required("Blog title is required"),
   description: yup.string().optional(),
+  publish_date: yup.string().optional(),
   seoTitle: yup.string().optional(),
   seoDescription: yup.string().optional(),
 });
 
 export const updateBlog = yup.object({
   title: yup.string().required("Blog title is required"),
+  description: yup.string().optional(),
+  publish_date: yup.string().optional(),
+  seoTitle: yup.string().optional(),
+  seoDescription: yup.string().optional(),
+});
+
+export const storePage = yup.object({
+  title: yup.string().required("Page title is required"),
+  description: yup.string().optional(),
+  seoTitle: yup.string().optional(),
+  seoDescription: yup.string().optional(),
+});
+
+export const updatePage = yup.object({
+  title: yup.string().required("Page title is required"),
   description: yup.string().optional(),
   seoTitle: yup.string().optional(),
   seoDescription: yup.string().optional(),

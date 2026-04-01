@@ -7,6 +7,7 @@ export type ExtendedBlog = {
   slug: string;
   description?: string | null;
   imageUrl?: string | null;
+  publish_date?: string;
   seoTitle?: string | null;
   seoDescription?: string | null;
   status: boolean;
@@ -29,6 +30,7 @@ export default class AdminBlogResource extends BaseResource<ExtendedBlog> {
       imageUrl: blog.imageUrl
         ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${blog.imageUrl}`
         : null,
+      publish_date: blog.publish_date ?? "",
       seoTitle: blog.seoTitle,
       seoDescription: blog.seoDescription,
       status: blog.status,

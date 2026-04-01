@@ -22,6 +22,17 @@ export default class AdminUserResource extends BaseResource<ExtendedUser> {
         categoryName = category?.name ?? null;
       }
     }
+    let companyName: string | null = null;
+    if (user.companyId) {
+      const companyIdNum = parseInt(String(user.companyId), 10);
+      if (!isNaN(companyIdNum)) {
+        const company = await prisma.company.findUnique({
+          where: { id: companyIdNum },
+          select: { name: true },
+        });
+        companyName = company?.name ?? null;
+      }
+    }
     return {
       id: user.id,
       slug: user.slug,
@@ -33,6 +44,8 @@ export default class AdminUserResource extends BaseResource<ExtendedUser> {
       address: user.address ?? null,
       categoryId: user.categoryId,
       categoryName: categoryName,
+      companyId: user.companyId ?? null,
+      companyName: companyName,
       dob: user.dob,
       age: user.age,
       gender: user.gender,

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import useApi from "@/utils/useApi";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
-function normalizeBlogPayload(d: unknown): Record<string, unknown> | null {
+function normalizePagePayload(d: unknown): Record<string, unknown> | null {
   if (!d || typeof d !== "object") return null;
   const o = d as Record<string, unknown>;
   const inner = o.data;
@@ -17,127 +17,71 @@ function normalizeBlogPayload(d: unknown): Record<string, unknown> | null {
   return null;
 }
 
-function toDateInputValue(raw: unknown): string {
-  if (raw == null || raw === "") return "";
-  const s = String(raw).trim();
-  const m = s.match(/\d{4}-\d{2}-\d{2}/);
-  return m ? m[0] : "";
-}
-
-export default function EditBlog() {
+export default function EditPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params?.slug;
   const slugParam =
     typeof slug === "string" ? slug : Array.isArray(slug) ? (slug[0] ?? "") : "";
 
-  // Set page title
   useEffect(() => {
-    document.title = "Admin | Edit Waldo News";
+    document.title = "Admin | Edit Page";
   }, []);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [publishDate, setPublishDate] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [oldImage, setOldImage] = useState<string | null>(null);
   const [status, setStatus] = useState("1");
-  const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const publishDateInputRef = useRef<HTMLInputElement>(null);
+  const baseUrl = slugParam ? `/api/admin/pages/${encodeURIComponent(slugParam)}` : "/api/admin/pages/_";
 
-  const openPublishDatePicker = () => {
-    const el = publishDateInputRef.current;
-    if (!el) return;
-    try {
-      if (typeof el.showPicker === "function") {
-        el.showPicker();
-      } else {
-        el.focus();
-      }
-    } catch {
-      el.focus();
-    }
-  };
-
-  const { data: categoriesData, fetchApi: fetchCategories } = useApi({
-    url: "/api/admin/blog-category",
+  const { data: pageData, fetchApi: fetchPage } = useApi({
+    url: baseUrl,
     method: "GET",
     type: "manual",
     requiresAuth: true,
   });
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (categoriesData && Array.isArray(categoriesData)) {
-      setCategories(
-        categoriesData.map((c: { id: number; title: string; slug: string }) => ({
-          id: c.id,
-          title: c.title,
-          slug: c.slug,
-        }))
-      );
-    }
-  }, [categoriesData]);
-
-  // Fetch single blog
-  const { data: blogData, fetchApi: fetchBlog } = useApi({
-    url: slugParam ? `/api/admin/blog/${encodeURIComponent(slugParam)}` : "/api/admin/blog/_",
-    method: "GET",
-    type: "manual",
-    requiresAuth: true,
-  });
-
-  // Update Blog API
   const { sendData, loading } = useApi({
-    url: slugParam ? `/api/admin/blog/${encodeURIComponent(slugParam)}` : "/api/admin/blog/_",
+    url: baseUrl,
     method: "PATCH",
     type: "manual",
     requiresAuth: true,
   });
 
   useEffect(() => {
-    if (slugParam) fetchBlog();
+    if (slugParam) fetchPage();
   }, [slugParam]);
 
-  // Fill edit form fields
   useEffect(() => {
-    const row = normalizeBlogPayload(blogData);
+    const row = normalizePagePayload(pageData);
     if (!row) return;
 
     setTitle(String(row.title ?? ""));
     setDescription(String(row.description ?? ""));
-    const rawDate = row.publish_date ?? row.publishDate;
-    setPublishDate(toDateInputValue(rawDate));
     setSeoTitle(String(row.seoTitle ?? ""));
     setSeoDescription(String(row.seoDescription ?? ""));
     setStatus(row.status === true || row.status === "true" || row.status === 1 ? "1" : "0");
     setOldImage((row.imageUrl as string | null) || null);
-    setCategoryId(row.blogCategoryId != null ? String(row.blogCategoryId) : "");
-  }, [blogData]);
+  }, [pageData]);
 
-  const updateBlog = async (e: React.FormEvent) => {
+  const updatePage = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!title) return setErrorMsg("Blog title is required.");
+    if (!title) return setErrorMsg("Page title is required.");
 
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      formData.append("publish_date", publishDate);
       formData.append("seoTitle", seoTitle);
       formData.append("seoDescription", seoDescription);
       formData.append("status", status);
-      formData.append("blogCategoryId", categoryId);
 
       if (image) {
         formData.append("image", image);
@@ -146,43 +90,36 @@ export default function EditBlog() {
       const res = await sendData(formData, undefined, "PATCH");
 
       if (res.code === 200) {
-        router.push("/admin/blog");
+        router.push("/admin/pages");
       } else {
         setErrorMsg(res.message || "Something went wrong.");
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Update failed. Try again.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Update failed. Try again.");
     }
   };
 
   return (
     <div className="p-4 mx-auto md:p-6">
-
       <div className="flex justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Edit Waldo News
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Edit Page</h2>
       </div>
 
       {errorMsg && (
-        <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
-          {errorMsg}
-        </div>
+        <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">{errorMsg}</div>
       )}
 
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-white/[0.03]">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white">
-            Waldo News Details
-          </h3>
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white">Page Details</h3>
         </div>
 
         <div className="p-4 sm:p-6">
-          <form onSubmit={updateBlog} className="space-y-5">
-
-            {/* Title */}
+          <form onSubmit={updatePage} className="space-y-5">
             <div>
-              <label className="block mb-1 text-sm font-medium">Waldo News Title <span className="text-red-500">*</span></label>
+              <label className="block mb-1 text-sm font-medium">
+                Page Title <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
@@ -191,28 +128,6 @@ export default function EditBlog() {
               />
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-400">
-                Category
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs
-                bg-transparent border-gray-300 focus:border-brand-300
-                dark:bg-gray-900 dark:text-white dark:border-gray-700"
-              >
-                <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={String(cat.id)}>
-                    {cat.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Description */}
             <div>
               <label className="block mb-1 text-sm font-medium">Description</label>
               <textarea
@@ -223,53 +138,30 @@ export default function EditBlog() {
               />
             </div>
 
-            {/* Publish Date */}
-            <div>
-              <label className="block mb-1 text-sm font-medium">
-                Publish Date{" "}
-                <span className="font-normal text-gray-500">(YYYY-MM-DD)</span>
-              </label>
-              <input
-                key={`publish-date-${normalizeBlogPayload(blogData)?.id ?? slugParam}-${publishDate}`}
-                ref={publishDateInputRef}
-                type="date"
-                value={publishDate}
-                onChange={(e) => setPublishDate(e.target.value)}
-                onClick={openPublishDatePicker}
-                className="h-11 w-full cursor-pointer rounded-lg border px-4 py-2.5 text-sm dark:bg-gray-900 dark:text-white dark:border-gray-700 dark:[color-scheme:dark]"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Saved as YYYY-MM-DD.
-              </p>
-            </div>
-
-            {/* SEO Title */}
             <div>
               <label className="block mb-1 text-sm font-medium">SEO Title</label>
               <input
                 type="text"
-                placeholder="Enter SEO title for search engines"
+                placeholder="Enter SEO title"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
                 value={seoTitle}
                 onChange={(e) => setSeoTitle(e.target.value)}
               />
             </div>
 
-            {/* SEO Description */}
             <div>
               <label className="block mb-1 text-sm font-medium">SEO Description</label>
               <textarea
                 rows={3}
-                placeholder="Enter SEO description for search engines"
+                placeholder="Enter SEO description"
                 className="w-full rounded-lg border px-4 py-2.5 text-sm"
                 value={seoDescription}
                 onChange={(e) => setSeoDescription(e.target.value)}
               />
             </div>
 
-            {/* Image */}
             <div>
-              <label className="block mb-1 text-sm font-medium">Waldo News Image</label>
+              <label className="block mb-1 text-sm font-medium">Page Image</label>
 
               {oldImage && !image && (
                 <div className="mb-4">
@@ -277,7 +169,7 @@ export default function EditBlog() {
                   <div className="relative w-32 h-32 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
                     <Image
                       src={oldImage}
-                      alt="Current blog image"
+                      alt="Current page image"
                       width={128}
                       height={128}
                       className="object-cover w-full h-full"
@@ -299,16 +191,13 @@ export default function EditBlog() {
                   }}
                 />
 
-                <p className="text-sm text-gray-500">
-                  Click to upload or drag & drop
-                </p>
+                <p className="text-sm text-gray-500">Click to upload or drag & drop</p>
 
                 {image && <p className="text-xs text-green-600 mt-2">{image.name}</p>}
               </label>
               <p className="text-xs text-gray-500 mt-1">Leave empty to keep current image</p>
             </div>
 
-            {/* Status */}
             <div>
               <label className="block mb-1 text-sm font-medium">Status</label>
               <select
@@ -321,21 +210,17 @@ export default function EditBlog() {
               </select>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => router.back()}>
                 Cancel
               </Button>
               <Button type="submit" loading={loading}>
-                Update Waldo News
+                Update Page
               </Button>
             </div>
-
           </form>
         </div>
       </div>
-
     </div>
   );
 }
-

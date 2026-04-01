@@ -349,6 +349,7 @@ async function main() {
       seoTitle: "Plebe Summer 2025",
       seoDescription: "Plebe Summer 2025 was a great success.",
       imageUrl: "/uploads/blog/05.jpg",
+      publish_date: "2025-07-01",
       status: true,
     },
     {
@@ -359,6 +360,7 @@ async function main() {
       seoTitle: "Sports and Training Access",
       seoDescription: "Sports and Training Access",
       imageUrl: "/uploads/blog/06.jpg",
+      publish_date: "2025-07-01",
       status: true,
     },
     {
@@ -369,6 +371,7 @@ async function main() {
       seoTitle: "Graduations / Commissioning 2025",
       seoDescription: "Graduations / Commissioning 2025 was a great success.",
       imageUrl: "/uploads/blog/07.jpg",
+      publish_date: "2025-07-01",
       status: true,
     },
     {
@@ -379,6 +382,7 @@ async function main() {
       seoTitle: "Studio Collection 2025",
       seoDescription: "Studio Collection 2025 was a great success.",
       imageUrl: "/uploads/blog/03.jpg",
+      publish_date: "2025-07-01",
       status: true,
     },
   ];

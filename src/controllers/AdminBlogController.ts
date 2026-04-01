@@ -51,10 +51,17 @@ export default class AdminBlogController extends RestController<
     if (this.data?.title) {
       this.data.slug = await generateSlug("blog" as any, this.data.title);
     }
+    const data = this.data as Record<string, unknown>;
+    if (
+      data.publish_date === undefined ||
+      data.publish_date === null ||
+      String(data.publish_date).trim() === ""
+    ) {
+      data.publish_date = new Date().toISOString().split("T")[0];
+    }
     if (this.data?.status !== undefined) {
       this.data.status = String(this.data.status) === "1";
     }
-    const data = this.data as Record<string, unknown>;
     if (data.blogCategoryId !== undefined && data.blogCategoryId !== "") {
       data.blogCategoryId = parseInt(String(data.blogCategoryId), 10);
     } else if (data.blogCategoryId === "") {

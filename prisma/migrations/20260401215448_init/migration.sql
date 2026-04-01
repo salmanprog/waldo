@@ -174,6 +174,7 @@ CREATE TABLE `blog` (
     `slug` VARCHAR(255) NOT NULL,
     `description` TEXT NULL,
     `imageUrl` TEXT NULL,
+    `publish_date` VARCHAR(255) NOT NULL,
     `seoTitle` VARCHAR(255) NULL,
     `seoDescription` TEXT NULL,
     `status` BOOLEAN NOT NULL DEFAULT true,
@@ -185,6 +186,25 @@ CREATE TABLE `blog` (
     UNIQUE INDEX `blog_slug_key`(`slug`),
     INDEX `blog_title_idx`(`title`),
     INDEX `blog_blog_category_id_idx`(`blog_category_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `pages` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `title` VARCHAR(255) NOT NULL,
+    `slug` VARCHAR(255) NOT NULL,
+    `description` TEXT NULL,
+    `imageUrl` TEXT NULL,
+    `seoTitle` VARCHAR(255) NULL,
+    `seoDescription` TEXT NULL,
+    `status` BOOLEAN NOT NULL DEFAULT true,
+    `createdAt` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `deletedAt` TIMESTAMP(6) NULL,
+
+    UNIQUE INDEX `pages_slug_key`(`slug`),
+    INDEX `pages_title_idx`(`title`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

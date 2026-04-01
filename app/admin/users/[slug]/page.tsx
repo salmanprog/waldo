@@ -31,6 +31,8 @@ interface UserDetails {
   emailVerifyAt?: string | null;
   platformType?: string | null;
   platformId?: string | null;
+  companyId?: string | null;
+  companyName?: string | null;
   createdAt: string;
   updatedAt: string;
   role: {
@@ -257,7 +259,15 @@ export default function UserDetailsPage() {
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Email Address</label>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90 mt-1">{user.email || "N/A"}</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-white/90 mt-1">
+                  {user.email ? (
+                    <a href={`mailto:${user.email}`} className="hover:underline text-brand-500">
+                      {user.email}
+                    </a>
+                  ) : (
+                    "N/A"
+                  )}
+                </p>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Mobile Number</label>
@@ -373,8 +383,10 @@ export default function UserDetailsPage() {
                 </p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Platoon</span>
-                <p className="font-medium text-gray-800 dark:text-white/90">{selectedOrder.platoonNumber}</p>
+                <span className="text-gray-500 dark:text-gray-400">Company</span>
+                <p className="font-medium text-gray-800 dark:text-white/90">
+                  {user?.companyName || "N/A"}
+                </p>
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Total</span>
