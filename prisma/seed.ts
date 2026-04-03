@@ -528,7 +528,26 @@ async function main() {
       create: company,
     });
   }
-  console.log("✅ Seed completed successfully");
+
+  const pages = [
+    {
+      title: "About Us",
+      slug: "about-us",
+      description: "<p><strong>In&nbsp;1955&nbsp;(l was 10) my godmother gave me a camera, and I never ltx.ked back. And never regretted it. After thirtyyearsof pho tcvaphing weddings and teaching high school English, decided to the Naval Academy parents by photo- graphing Plebe Summer. In 1980 it was a Whim that has into a passion to helping the Plebe parents make it through Plebe Summer I am Often asked Why I do not retire. The answer is simple. This is not work for me, and my fatherwa' in the Great Class Of 1939. And the Naval Academy and parents have supported me in my journey.</strong></p><ul><li><p><strong>1963-1967:&nbsp;Princeton University</strong></p></li><li><p><strong>1968-1971:&nbsp;Maryland. Shippensburg State</strong></p></li><li><p><strong>1978-79:&nbsp;President and Chairman of the Board, Maryland Professional Photographers Association</strong></p></li><li><p><strong>1978-79:&nbsp;Md Institute Of Art in photography</strong></p></li><li><p><strong>1980:&nbsp;First summer</strong></p></li></ul><p><strong>Encouraged by the Public Affairs Office, I continued to photographing Plebe Summer for twenty years. In with the advent of the first digital camera, I concentrated on photography. Worked through the USNA Alumni @ 2010 thru 2026: With the formation Of (Naval Academy Business Services Division), I became the vendor for plebe Summer,</strong></p>",
+      seoTitle: "About Us",
+      seoDescription: "About Us",
+      imageUrl: "/uploads/pages/1775233647351-01.webp",
+      status: true,
+    },
+  ];
+  for (const page of pages) {
+    await (prisma as any).pages.upsert({
+      where: { slug: page.slug },
+      update: {},
+      create: page,
+    });
+  }
+  console.log("Seed completed successfully");
 }
 
 main()

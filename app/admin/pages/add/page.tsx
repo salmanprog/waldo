@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Button from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import useApi from "@/utils/useApi";
+import RichTextEditor from "@/components/ui/rich-text-editor/RichTextEditor";
 
 export default function AddPage() {
   const router = useRouter();
@@ -100,13 +101,7 @@ export default function AddPage() {
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Description
               </label>
-              <textarea
-                rows={5}
-                placeholder="Write description..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs bg-transparent border-gray-300 focus:border-brand-300 dark:bg-gray-900 dark:text-white dark:border-gray-700"
-              />
+              <RichTextEditor value={description} onChange={setDescription} />
             </div>
 
             <div>

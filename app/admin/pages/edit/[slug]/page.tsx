@@ -5,6 +5,7 @@ import Button from "@/components/ui/button/Button";
 import useApi from "@/utils/useApi";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import RichTextEditor from "@/components/ui/rich-text-editor/RichTextEditor";
 
 function normalizePagePayload(d: unknown): Record<string, unknown> | null {
   if (!d || typeof d !== "object") return null;
@@ -36,6 +37,8 @@ export default function EditPage() {
   const [oldImage, setOldImage] = useState<string | null>(null);
   const [status, setStatus] = useState("1");
   const [errorMsg, setErrorMsg] = useState("");
+  const [descriptionEditorKey, setDescriptionEditorKey] = useState(0);
+  const [seoDescriptionEditorKey, setSeoDescriptionEditorKey] = useState(0);
 
   const baseUrl = slugParam ? `/api/admin/pages/${encodeURIComponent(slugParam)}` : "/api/admin/pages/_";
 
@@ -58,8 +61,22 @@ export default function EditPage() {
   }, [slugParam]);
 
   useEffect(() => {
+    setTitle("");
+    setDescription("");
+    setSeoTitle("");
+    setSeoDescription("");
+    setStatus("1");
+    setOldImage(null);
+    setImage(null);
+    setDescriptionEditorKey(0);
+    setSeoDescriptionEditorKey(0);
+  }, [slugParam]);
+
+  useEffect(() => {
     const row = normalizePagePayload(pageData);
     if (!row) return;
+    const rowSlug = String(row.slug ?? "");
+    if (slugParam && rowSlug && rowSlug !== slugParam) return;
 
     setTitle(String(row.title ?? ""));
     setDescription(String(row.description ?? ""));
@@ -67,7 +84,9 @@ export default function EditPage() {
     setSeoDescription(String(row.seoDescription ?? ""));
     setStatus(row.status === true || row.status === "true" || row.status === 1 ? "1" : "0");
     setOldImage((row.imageUrl as string | null) || null);
-  }, [pageData]);
+    setDescriptionEditorKey((k) => k + 1);
+    setSeoDescriptionEditorKey((k) => k + 1);
+  }, [pageData, slugParam]);
 
   const updatePage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,11 +149,10 @@ export default function EditPage() {
 
             <div>
               <label className="block mb-1 text-sm font-medium">Description</label>
-              <textarea
-                rows={5}
-                className="w-full rounded-lg border px-4 py-2.5 text-sm"
+              <RichTextEditor
+                key={descriptionEditorKey}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
               />
             </div>
 
@@ -142,7 +160,7 @@ export default function EditPage() {
               <label className="block mb-1 text-sm font-medium">SEO Title</label>
               <input
                 type="text"
-                placeholder="Enter SEO title"
+                placeholder="Enter SEO title for search engines"
                 className="h-11 w-full rounded-lg border px-4 py-2.5 text-sm"
                 value={seoTitle}
                 onChange={(e) => setSeoTitle(e.target.value)}
@@ -154,9 +172,9 @@ export default function EditPage() {
               <textarea
                 rows={3}
                 placeholder="Enter SEO description"
-                className="w-full rounded-lg border px-4 py-2.5 text-sm"
                 value={seoDescription}
                 onChange={(e) => setSeoDescription(e.target.value)}
+                className="w-full rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs bg-transparent border-gray-300 focus:border-brand-300 dark:bg-gray-900 dark:text-white dark:border-gray-700"
               />
             </div>
 
