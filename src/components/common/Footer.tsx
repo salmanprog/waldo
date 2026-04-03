@@ -65,7 +65,7 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
+          {/* <div>
             <h5 className="text-2xl font-semibold mb-6">Quick Links</h5>
             <ul className="space-y-3">
               {footerLinks.map(
@@ -81,7 +81,7 @@ export default function Footer() {
                 )
               )}
             </ul>
-          </div>
+          </div> */}
 
           {/* Social */}
           <div>
