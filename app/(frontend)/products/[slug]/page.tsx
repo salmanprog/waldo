@@ -130,7 +130,7 @@ export default function ProductDescriptionPage({ params }: ProductDescriptionPro
                                             {event.description}
                                         </p>
                                     )}
-                                    <span className="">Add to cart</span>
+                                    {/* <span className="">Add to cart</span> */}
                                     <div className="mt-6">
                                         {cart.some(item => item.id === event.id) ? (
                                             <Link
