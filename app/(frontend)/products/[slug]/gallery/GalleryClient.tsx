@@ -69,14 +69,14 @@ export default function GalleryClient({ images, productTitle }: GalleryClientPro
                 <div className="container mx-auto">
                     <div className="flex justify-between items-center mb-10">
                         <div>
-                            <h3 className="hd-md">Gallery</h3>
+                            {/* <h3 className="hd-md">Gallery</h3> */}
                         </div>
-                        <div className="w-1/3 relative">
+                        {/* <div className="w-1/3 relative">
                             <Input type="text" className="!bg-transparent !text-gray-500 !border-gray-300 custom-input pl-[48px]" placeholder="Search images" />
                             <div className="absolute left-2 top-1/2 -translate-y-1/2">
                                 <Icons.search className="text-[24px]" />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {visibleImages.map((image, imgIndex) => {

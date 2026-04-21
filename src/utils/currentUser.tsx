@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import useApi, { ApiResponse } from "@/utils/useApi";
 
 interface User {
@@ -13,12 +13,9 @@ let cacheTimestamp = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const useCurrentUser = () => {
-  // Start with safe initial states (no client-side checks during SSR)
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [errorUser, setErrorUser] = useState<string | null>(null);
-  const hasFetchedRef = useRef(false);
-  const isInitializedRef = useRef(false);
 
   const { fetchApi } = useApi({
     url: "/api/currentuser",
@@ -28,70 +25,62 @@ export const useCurrentUser = () => {
   });
 
   useEffect(() => {
-    // Only run on client side
     if (typeof window === "undefined") return;
-    
-    // Prevent multiple calls
-    if (hasFetchedRef.current) return;
+
+    let isMounted = true;
 
     const getToken = () => {
       return localStorage.getItem("token") || sessionStorage.getItem("token");
     };
 
     const hasToken = getToken();
-    const isCacheValid = cachedUser && (Date.now() - cacheTimestamp < CACHE_DURATION);
+    const isCacheValid = cachedUser && Date.now() - cacheTimestamp < CACHE_DURATION;
 
-    // If we have cached user and it's valid, use it immediately
     if (isCacheValid && cachedUser) {
       setUser(cachedUser);
       setLoadingUser(false);
-      hasFetchedRef.current = true;
-      isInitializedRef.current = true;
-      return;
+      return () => {
+        isMounted = false;
+      };
     }
 
-    // If no token, set loading to false immediately
     if (!hasToken) {
+      setUser(null);
       setLoadingUser(false);
-      hasFetchedRef.current = true;
-      isInitializedRef.current = true;
-      return;
+      return () => {
+        isMounted = false;
+      };
     }
 
-    hasFetchedRef.current = true;
-    isInitializedRef.current = true;
+    setLoadingUser(true);
 
-    let isMounted = true; // avoid state update if unmounted
-
-    const fetchUser = async () => {
-      setLoadingUser(true);
+    void (async () => {
       try {
-        const res: any = await fetchApi(); // get raw response
+        const res: ApiResponse & Record<string, unknown> = (await fetchApi()) as ApiResponse & Record<string, unknown>;
+
+        if (!isMounted) return;
 
         if (res?.code === 200 && res?.data) {
-          if (isMounted) {
-            setUser(res.data);
-            // Cache the user data
-            cachedUser = res.data;
-            cacheTimestamp = Date.now();
-          }
+          setUser(res.data as User);
+          cachedUser = res.data as User;
+          cacheTimestamp = Date.now();
         } else {
-          if (isMounted) setErrorUser(res?.message || "Failed to fetch user");
+          setErrorUser((res?.message as string) || "Failed to fetch user");
         }
-      } catch (err: any) {
-        if (isMounted) setErrorUser(err?.message || "Server error");
+      } catch (err: unknown) {
+        if (isMounted) {
+          setErrorUser(err instanceof Error ? err.message : "Server error");
+        }
       } finally {
         if (isMounted) setLoadingUser(false);
       }
-    };
-
-    fetchUser();
+    })();
 
     return () => {
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array to call only once
+  }, []);
 
   return { user, loadingUser, errorUser };
 };

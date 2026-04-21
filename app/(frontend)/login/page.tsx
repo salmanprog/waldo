@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Input from "@/components/form/input/InputField";
 import Link from "next/link";
 import InnerBanner from "@/components/common/InnerBanner";
 import useApi, { ApiResponse } from "@/utils/useApi";
 import { useRouter } from "next/navigation";
+import { safeRedirectPath } from "@/utils/safeRedirectPath";
 
 interface LoginResponse {
   apiTokens?: { apiToken: string }[];
@@ -14,6 +15,12 @@ interface LoginResponse {
 
 export default function LoginPage() {
   const router = useRouter();
+
+  const postAuthRedirect = useMemo(() => {
+    if (typeof window === "undefined") return "/";
+    return safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"), "/");
+  }, []);
+
   useEffect(() => {
     document.title = "My Waldo | Login";
   }, []);
@@ -21,9 +28,9 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("token") || document.cookie.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
     if (token) {
-      router.push("/");
+      router.push(postAuthRedirect);
     }
-  }, [router]);
+  }, [router, postAuthRedirect]);
   const { sendData, loading, error } = useApi({
     url: "/api/users/login",
     type: "manual",
@@ -38,6 +45,24 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");  // for showing top-level error message
+  const [verifyBanner, setVerifyBanner] = useState<{ text: string; tone: "ok" | "warn" } | null>(null);
+
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get("emailVerify");
+    if (status === "verified") {
+      setVerifyBanner({ text: "Your email has been verified. You can sign in.", tone: "ok" });
+    } else if (status === "expired") {
+      setVerifyBanner({
+        text: "This verification link has expired. Please contact support if you need help.",
+        tone: "warn",
+      });
+    } else if (status === "invalid") {
+      setVerifyBanner({
+        text: "This verification link is invalid or has already been used.",
+        tone: "warn",
+      });
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -93,8 +118,7 @@ export default function LoginPage() {
       if (res.code === 200 && res.data?.apiTokens?.[0]?.apiToken) {
         const token = res.data.apiTokens[0].apiToken;
         localStorage.setItem("token", token);
-        //router.push("/");
-        window.location.href = "/";
+        window.location.href = postAuthRedirect;
       } else {
         setErrorMsg(res.message || "Credentials does not matach in our records.");
       }
@@ -120,6 +144,17 @@ export default function LoginPage() {
               {/* Display error message */}
               {errorMsg && (
                 <div className="text-sm text-red-500 font-medium mb-3">{errorMsg}</div>
+              )}
+              {verifyBanner && (
+                <div
+                  className={
+                    verifyBanner.tone === "ok"
+                      ? "bg-green-100 text-green-800 p-3 rounded-md text-sm font-medium mb-3"
+                      : "bg-amber-100 text-amber-900 p-3 rounded-md text-sm font-medium mb-3"
+                  }
+                >
+                  {verifyBanner.text}
+                </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -192,7 +227,10 @@ export default function LoginPage() {
                 {/* Signup Link */}
                 <p className="text-center text-sm text-gray-600 mt-6">
                   Don't have an account?{" "}
-                  <Link href="/signup" className="text-[var(--secondary-theme)] hover:text-blue-700 font-semibold">
+                  <Link
+                    href={`/signup?redirect=${encodeURIComponent(postAuthRedirect)}`}
+                    className="text-[var(--secondary-theme)] hover:text-blue-700 font-semibold"
+                  >
                     Sign Up
                   </Link>
                 </p>

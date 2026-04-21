@@ -1,4 +1,5 @@
 import type { Prisma, User } from "@prisma/client";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import RestController from "@/core/RestController";
 import { storeUser, updateUser, changePassword } from "@/validators/user.validation";
@@ -8,6 +9,7 @@ import type { DefaultArgs } from "@prisma/client/runtime/library";
 import { generateSlug } from "@/utils/slug";
 import { createUserToken, getUserByToken } from "@/utils/token";
 import UserHook from "@/hooks/UserHook";
+import { sendSignupVerificationEmail } from "@/lib/sendSignupVerificationEmail";
 
 export type ExtendedUser = User & { image?: string };
 
@@ -66,6 +68,11 @@ export default class UsersController extends RestController<
       const bcrypt = await import("bcryptjs");
       this.data.password = await bcrypt.hash(this.data.password, 10);
     }
+
+    if (email && this.data) {
+      this.data.emailOtp = randomBytes(32).toString("hex");
+      this.data.emailOtpCreatedAt = new Date();
+    }
   }
 
   protected async afterStore(record: ExtendedUser): Promise<ExtendedUser> {
@@ -73,6 +80,23 @@ export default class UsersController extends RestController<
       record.id,
       "web"
     );
+
+    const to = record.email?.trim();
+    const verifyToken = record.emailOtp;
+    if (to && verifyToken) {
+      const appOrigin = this.__request ? new URL(this.__request.url).origin : undefined;
+      try {
+        let check =await sendSignupVerificationEmail({
+          to,
+          name: record.name ?? null,
+          token: verifyToken,
+          appOrigin,
+        });
+      } catch (err) {
+        console.error("[UsersController] signup verification email failed:", err);
+      }
+    }
+
     return record;
   }
 
@@ -109,6 +133,17 @@ export default class UsersController extends RestController<
 
       if (!isValid) {
         return this.sendError("Invalid credentials", {password_error: "Password does not match."}, 400);
+      }
+
+      if (!user.isEmailVerify) {
+        return this.sendError(
+          "Please verify your email before signing in. Check your inbox for the verification link.",
+          {
+            email_verify:
+              "Your account is not activated yet. Use the link we emailed you, then try logging in again.",
+          },
+          403
+        );
       }
 
       await createUserToken(

@@ -78,6 +78,12 @@ export default function Header() {
 
     const productCategories = useMemo(() => PRODUCT_CATEGORIES, []);
 
+    const photoAccessHref = useMemo(() => {
+        if (loadingUser) return "/photo-access";
+        if (user) return "/photo-access";
+        return "/signup?redirect=/photo-access";
+    }, [loadingUser, user]);
+
     const handleMouseEnter = useCallback(() => {
         if (!hoverRef.current) {
             hoverRef.current = true;
@@ -133,7 +139,7 @@ export default function Header() {
                                 </div>
                             )}
                         </li>
-                        <li><Link className="primary-nav-link" href="/">Photo Access</Link></li>
+                        <li><Link className="primary-nav-link" href={photoAccessHref}>Photo Access</Link></li>
                         <li className="md-none">
                             <Link href="/">
                                 <Image src="/images/logo.png" alt="Logo" width={100} height={100}/>

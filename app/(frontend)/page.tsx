@@ -169,7 +169,7 @@ export default function HomePage() {
         <div className="absolute inset-0 z-[5]" ></div>
       </section>
       {/* Event Categories Sections */}
-      {categories.length > 0 ? (
+      {/* {categories.length > 0 ? (
         <section className="bg-white py-[50px]">
           <div className="container">
             <h2 className="text-[40px] font-bold text-[#000000] text-center mb-10 uppercase">Services</h2>
@@ -220,7 +220,7 @@ export default function HomePage() {
 
         </div>
       ) : null
-      }
+      } */}
     </>
   )
 }

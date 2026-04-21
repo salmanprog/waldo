@@ -93,7 +93,9 @@ export default function useApi(options: UseApiOptions) {
 
       const json: T = await res.json();
 
-      if (res.status === 401 || res.status === 403) {
+      // Only treat 401/403 as session expiry when this hook sent auth (e.g. admin/user APIs).
+      // Public routes (login, signup) can legitimately return 403 without redirecting to admin.
+      if (requiresAuth && (res.status === 401 || res.status === 403)) {
         setError("Session expired. Redirecting to login...");
         localStorage.removeItem("token");
         setTimeout(() => router.push("/admin/login"), 1500);

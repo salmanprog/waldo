@@ -216,7 +216,7 @@ export default function EditEventCategory() {
             </div>
 
             {/* Applicable Platoon Number */}
-            <div>
+            <div style={{ display:"none" }}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                 Applicable Platoon Number
               </label>

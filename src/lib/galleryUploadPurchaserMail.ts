@@ -1,5 +1,7 @@
 import dns from "dns";
+import type { LookupFunction } from "net";
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { prisma } from "@/lib/prisma";
 
 /** Prefer IPv4 for SMTP when IPv6 is unreachable (avoids ENETUNREACH to e.g. Gmail’s IPv6). */
@@ -26,8 +28,14 @@ async function sendSmtpEmail(to: string, subject: string, text: string): Promise
     host,
     port,
     secure,
+    family: 4,
+    lookup: ((hostname, _opts, cb) => {
+      dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+        cb(err, address, family);
+      });
+    }) as LookupFunction,
     ...(user && pass ? { auth: { user, pass } } : {}),
-  });
+  } as SMTPTransport.Options);
 
   await transporter.sendMail({ from, to, subject, text });
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Input from "@/components/form/input/InputField";
 import Link from "next/link";
 import Image from "next/image";
 import InnerBanner from "@/components/common/InnerBanner";
 import useApi, { ApiResponse } from "@/utils/useApi";
 import { useRouter } from "next/navigation";
+import { safeRedirectPath } from "@/utils/safeRedirectPath";
 import { IoMdArrowDropdown } from "react-icons/io";
 
 interface SignupResponse {
@@ -19,12 +20,17 @@ export default function SignUpPage() {
     document.title = "My Waldo | Sign Up";
   }, []);
 
+  const postAuthRedirect = useMemo(() => {
+    if (typeof window === "undefined") return "/";
+    return safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"), "/");
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token") || document.cookie.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
     if (token) {
-      router.push("/");
+      router.push(postAuthRedirect);
     }
-  }, [router]);
+  }, [router, postAuthRedirect]);
   const [form, setForm] = useState({
     name: "",
     lname: "",
@@ -143,8 +149,13 @@ export default function SignUpPage() {
       const res = await sendData<ApiResponse<SignupResponse>>(fd, undefined, "POST");
 
       if (res.code === 200) {
-        setSuccessMsg("Thanks for registering! Please login with your credentials.");
-        setTimeout(() => router.push("/login"), 1500);
+        setSuccessMsg(
+          "Thanks for registering! Check your email for a verification link, then sign in."
+        );
+        setTimeout(() => {
+          const q = new URLSearchParams({ redirect: postAuthRedirect }).toString();
+          router.push(`/login?${q}`);
+        }, 1500);
       }
 
       else if (res.code === 422) {
