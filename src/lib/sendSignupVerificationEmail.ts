@@ -14,7 +14,12 @@ export type SendSignupVerificationEmailParams = {
   appOrigin?: string;
 };
 
-async function sendSmtpEmail(to: string, subject: string, text: string): Promise<void> {
+async function sendSmtpEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string
+): Promise<void> {
   const host = process.env.SMTP_HOST;
   if (!host) {
     console.warn("[sendSignupVerificationEmail] SMTP_HOST is not set; email skipped");
@@ -43,7 +48,13 @@ async function sendSmtpEmail(to: string, subject: string, text: string): Promise
     ...(user && pass ? { auth: { user, pass } } : {}),
   } as SMTPTransport.Options);
 
-  await transporter.sendMail({ from, to, subject, text });
+  await transporter.sendMail({
+    from,
+    to,
+    subject,
+    text,
+    ...(html ? { html } : {}),
+  });
 }
 
 /**
@@ -64,6 +75,14 @@ export async function sendSignupVerificationEmail({
 
   const greeting = name?.trim() ? `Hi ${name.trim()},` : "Hi,";
   const subject = "Verify your My Waldo account";
+
+  const escapeHtml = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
   const text = verifyUrl
     ? `${greeting}
 
@@ -86,5 +105,37 @@ If you did not create an account, you can ignore this email.
 Thank you,
 Thornton Studios`;
 
-  await sendSmtpEmail(to, subject, text);
+  /** HTML clients: button-shaped link. Email clients block JavaScript — href is the only reliable “click”. */
+  const html = verifyUrl
+    ? `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:24px;font-family:system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.5;color:#1f2937;">
+  <p>${escapeHtml(greeting)}</p>
+  <p>Please verify your email using the button below (valid for 7 days):</p>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0;">
+    <tr>
+      <td style="border-radius:8px;background:#2563eb;">
+        <a href="${escapeHtml(verifyUrl)}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
+          Verify your email
+        </a>
+      </td>
+    </tr>
+  </table>
+  <p>If you did not create an account, you can ignore this email.</p>
+  <p>Thank you,<br/>Thornton Studios</p>
+</body>
+</html>`
+    : `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:24px;font-family:system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.5;color:#1f2937;">
+  <p>${escapeHtml(greeting)}</p>
+  <p>Please verify your email using this token (set NEXT_PUBLIC_APP_URL for a verification link):</p>
+  <pre style="background:#f3f4f6;padding:12px;border-radius:8px;overflow:auto;">${escapeHtml(token)}</pre>
+  <p>If you did not create an account, you can ignore this email.</p>
+  <p>Thank you,<br/>Thornton Studios</p>
+</body>
+</html>`;
+
+  await sendSmtpEmail(to, subject, text, html);
 }
