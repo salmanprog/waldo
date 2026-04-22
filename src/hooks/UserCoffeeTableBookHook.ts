@@ -5,7 +5,12 @@ export default class UserCoffeeTableBookHook {
     query: Prisma.CoffeeTableBookFindManyArgs,
     _request?: Record<string, unknown>
   ): Promise<Prisma.CoffeeTableBookFindManyArgs> {
-    (query as any).include = { images: true };
+    (query as any).include = {
+      images: {
+        where: { deletedAt: null },
+        orderBy: { id: "asc" },
+      },
+    };
     (query as any).orderBy = { createdAt: "desc" };
     return query;
   }
@@ -14,7 +19,12 @@ export default class UserCoffeeTableBookHook {
     query: Prisma.CoffeeTableBookFindUniqueArgs,
     _request?: Record<string, unknown>
   ): Promise<Prisma.CoffeeTableBookFindUniqueArgs> {
-    (query as any).include = { images: true };
+    (query as any).include = {
+      images: {
+        where: { deletedAt: null },
+        orderBy: { id: "asc" },
+      },
+    };
     return query;
   }
 }

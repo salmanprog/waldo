@@ -135,6 +135,14 @@ export default class UsersController extends RestController<
         return this.sendError("Invalid credentials", {password_error: "Password does not match."}, 400);
       }
 
+      if (!user.status) {
+        return this.sendError(
+          "Your account has been deactivated. Please contact support if you need help.",
+          { account_status: "This account is not active." },
+          403
+        );
+      }
+
       if (!user.isEmailVerify) {
         return this.sendError(
           "Please verify your email before signing in. Check your inbox for the verification link.",

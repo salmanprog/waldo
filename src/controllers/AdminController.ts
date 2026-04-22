@@ -111,6 +111,14 @@ export default class AdminController extends RestController<
         return this.sendError("Invalid credentials", {password_error: "Password does not match."}, 401);
       }
 
+      if (!user.status) {
+        return this.sendError(
+          "Your account has been deactivated. Please contact support if you need help.",
+          { account_status: "This account is not active." },
+          403
+        );
+      }
+
       await createUserToken(
         user.id,
         "web"

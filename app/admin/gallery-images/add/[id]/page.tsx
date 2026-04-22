@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import { useParams, useRouter } from "next/navigation";
 import useApi from "@/utils/useApi";
 
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 500;
 const PAGE_SIZE = 20;
 
 async function sendGalleryUploadEmailToPurchasers(galleryIdStr: string) {

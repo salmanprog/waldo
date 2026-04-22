@@ -62,9 +62,9 @@ const navItems: NavItem[] = [
     icon: Plug,
     name: 'Services',
     subItems: [
-      { name: 'Services Category', path: '/admin/event-categories/', pro: false },
-      { name: 'Services Category FAQ', path: '/admin/event-category-faq/', pro: false },
-      { name: 'Services Packages', path: '/admin/event', pro: false },
+      { name: 'Service Category', path: '/admin/event-categories/', pro: false },
+      { name: 'Service Category FAQ', path: '/admin/event-category-faq/', pro: false },
+      { name: 'Service Packages', path: '/admin/event', pro: false },
     ],
   },
   {

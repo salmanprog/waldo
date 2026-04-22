@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, use, useRef } from "react";
 import useApi from "@/utils/useApi";
 import Button from "@/components/ui/button/Button";
 import Link from "next/link";
@@ -32,8 +31,10 @@ export default function ViewCoffeeTableBook({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const [book, setBook] = useState<CoffeeTableBook | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, loading, fetchApi } = useApi({
     url: `/api/admin/coffe-book-table/${id}`,
@@ -58,6 +59,79 @@ export default function ViewCoffeeTableBook({
       setBook(bookData);
     }
   }, [data]);
+
+  const getAuthToken = () =>
+    typeof window !== "undefined"
+      ? localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+      : "";
+
+  const handlePickImages = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    const token = getAuthToken();
+    if (!token) {
+      window.alert("You are not signed in.");
+      e.target.value = "";
+      return;
+    }
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("image", file);
+        const res = await fetch(`/api/admin/coffe-book-table/${id}/images`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const json = (await res.json()) as { message?: string };
+        if (!res.ok) {
+          window.alert(json.message || "Upload failed");
+          break;
+        }
+      }
+      await fetchApi();
+    } catch {
+      window.alert("Something went wrong while uploading.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!window.confirm("Delete this image? This cannot be undone.")) return;
+
+    const token = getAuthToken();
+    if (!token) {
+      window.alert("You are not signed in.");
+      return;
+    }
+
+    setDeletingId(imageId);
+    try {
+      const res = await fetch(`/api/admin/coffe-book-table/${id}/images/${imageId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = (await res.json()) as { message?: string };
+      if (!res.ok) {
+        window.alert(json.message || "Delete failed");
+      } else {
+        await fetchApi();
+      }
+    } catch {
+      window.alert("Something went wrong while deleting.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -149,9 +223,29 @@ export default function ViewCoffeeTableBook({
 
       {/* Images Section */}
       <div className="border rounded-2xl bg-white dark:bg-gray-900 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-          Uploaded Images ({book.images?.length || 0})
-        </h3>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+          multiple
+          className="hidden"
+          onChange={handleImageFiles}
+        />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            Uploaded Images ({book.images?.length || 0})
+          </h3>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            loading={uploading}
+            disabled={uploading}
+            onClick={handlePickImages}
+          >
+            Add images
+          </Button>
+        </div>
 
         {book.images && book.images.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -196,6 +290,17 @@ export default function ViewCoffeeTableBook({
                       </svg>
                       Download
                     </a>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="!px-3 !py-2 text-red-600 ring-red-200 hover:bg-red-50 dark:text-red-400 dark:ring-red-900 dark:hover:bg-red-950/30"
+                      loading={deletingId === image.id}
+                      disabled={deletingId !== null}
+                      onClick={() => void handleDeleteImage(image.id)}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -203,7 +308,7 @@ export default function ViewCoffeeTableBook({
           </div>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-            No images uploaded
+            No images uploaded. Use &quot;Add images&quot; to upload JPG, PNG, or WEBP files.
           </p>
         )}
       </div>

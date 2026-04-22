@@ -6,7 +6,10 @@ export default class AdminCoffeeTableBookHook {
     request?: Record<string, unknown>
   ): Promise<any> {
     query.include = {
-      images: true,
+      images: {
+        where: { deletedAt: null },
+        orderBy: { id: "asc" },
+      },
     };
     query.orderBy = {
       createdAt: "desc",
@@ -19,7 +22,10 @@ export default class AdminCoffeeTableBookHook {
     request?: Record<string, unknown>
   ): Promise<any> {
     query.include = {
-      images: true,
+      images: {
+        where: { deletedAt: null },
+        orderBy: { id: "asc" },
+      },
     };
     return query;
   }

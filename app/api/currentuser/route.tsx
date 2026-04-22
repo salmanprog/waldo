@@ -1,5 +1,6 @@
 import UsersController from "@/controllers/UsersController";
 import { verifyToken } from "@/utils/jwt";
+import { getUserByToken } from "@/utils/token";
 
 export const runtime = "nodejs"; // required for JWT verification
 
@@ -8,7 +9,7 @@ interface DecodedToken {
   [key: string]: unknown;
 }
 
-// Helper to extract user from request
+// Helper: valid JWT + token row in DB + active user (matches getUserByToken)
 async function getUserFromRequest(req: Request): Promise<DecodedToken | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return null;
@@ -19,7 +20,14 @@ async function getUserFromRequest(req: Request): Promise<DecodedToken | null> {
   const decoded = await verifyToken(token);
   if (!decoded || typeof decoded === "string") return null;
 
-  return decoded as DecodedToken;
+  const sessionUser = await getUserByToken(token);
+  if (!sessionUser) return null;
+
+  const payloadId = (decoded as { id?: unknown }).id;
+  if (payloadId === undefined || payloadId === null) return null;
+  if (String(sessionUser.id) !== String(payloadId)) return null;
+
+  return { id: String(sessionUser.id) };
 }
 
 export async function GET(req: Request) {

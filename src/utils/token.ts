@@ -37,6 +37,7 @@ export async function getUserByToken(token: string) {
   });
 
   if (!record || !record.user) return null;
+  if (!record.user.status) return null;
   const { password, ...safeUser } = record.user;
   return { ...safeUser, tokenId: record.id };
 }

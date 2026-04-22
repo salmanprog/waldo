@@ -17,6 +17,7 @@ interface User {
   platoon: string | null;
   categoryId?: string | null;
   categoryName?: string | null;
+  status?: boolean;
   role: {
     id: number;
     title: string;
@@ -83,6 +84,34 @@ export default function UserList() {
     }
     return list;
   }, [sortedUsers, searchQuery, platoonSearchQuery]);
+
+  const handleToggleUserStatus = async (user: User) => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("token") || sessionStorage.getItem("token")
+        : "";
+    if (!token) return;
+    const isActive = user.status !== false;
+    const nextStatus = !isActive;
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(user.slug)}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const json = (await res.json()) as { code?: number; message?: string };
+      if (json.code === 200) {
+        await fetchApi();
+      } else {
+        window.alert(json.message || "Failed to update user status");
+      }
+    } catch {
+      window.alert("Failed to update user status");
+    }
+  };
 
   const handleExport = () => {
     const headers = ["ID", "Name", "Email", "Category", "Platoon Number", "Role"];
@@ -207,6 +236,12 @@ export default function UserList() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
+                Status
+              </TableCell>
+              <TableCell
+                isHeader
+                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
                 Action
               </TableCell>
             </TableRow>
@@ -255,9 +290,22 @@ export default function UserList() {
                   <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {user.role?.title || "N/A"}
                   </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {user.status === false ? (
+                      <Badge color="error" size="sm">Inactive</Badge>
+                    ) : (
+                      <Badge color="success" size="sm">Active</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="py-3 text-center">
                     <ActionMenu
                       viewUrl={`/admin/users/${user.slug}`}
+                      extraItems={[
+                        {
+                          label: user.status === false ? "Activate user" : "Deactivate user",
+                          onClick: () => handleToggleUserStatus(user),
+                        },
+                      ]}
                     />
                   </TableCell>
                 </TableRow>
