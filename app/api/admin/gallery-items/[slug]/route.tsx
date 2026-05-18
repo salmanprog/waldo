@@ -2,8 +2,6 @@ export const runtime = "nodejs";
 import AdminGalleryItemsController from "@/controllers/AdminGalleryItemsController";
 import type { ExtendedGalleryItems } from "@/resources/AdminGalleryItemsResource";
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 
 // ------------------- GET (show) -------------------
 export async function GET(

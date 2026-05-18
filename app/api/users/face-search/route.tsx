@@ -85,21 +85,32 @@ const indexCache = new Map<string, { index: FaceIndexEntry[]; mtime: number }>()
 // ─────────────────────────────────────────────
 async function getOrBuildIndex(gallery: string, platoonNumber?: number | string | null): Promise<FaceIndexEntry[]> {
   const subdir = platoonNumber != null ? `platoon-${platoonNumber}` : 'items'
+  const indexKey = platoonNumber != null ? `${gallery}-platoon-${platoonNumber}` : gallery
+  const indexPath = path.join(MODEL_PATH, `index-${indexKey.replace(/[/\\]/g, '-')}.json`)
+
   let itemsDir = path.join(GALLERY_ROOT, gallery, subdir)
   if (!fs.existsSync(itemsDir)) {
     // Fallback: if platoon dir missing, try items/
     if (platoonNumber != null) {
       itemsDir = path.join(GALLERY_ROOT, gallery, 'items')
       if (fs.existsSync(itemsDir)) {
-        // Use items dir, image paths stay under items/
         return getOrBuildIndex(gallery, null)
+      }
+    }
+    // S3-only gallery: no local folder — load faces index built from image URLs
+    if (fs.existsSync(indexPath)) {
+      try {
+        const stat = fs.statSync(indexPath)
+        const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8')) as FaceIndexEntry[]
+        indexCache.set(indexKey, { index, mtime: stat.mtimeMs })
+        return index
+      } catch {
+        throw new Error('Gallery not found')
       }
     }
     throw new Error('Gallery not found')
   }
 
-  const indexKey = platoonNumber != null ? `${gallery}-platoon-${platoonNumber}` : gallery
-  const indexPath = path.join(MODEL_PATH, `index-${indexKey.replace(/[/\\]/g, '-')}.json`)
   const dirMtime = fs.statSync(itemsDir).mtimeMs
 
   // Check in-memory cache

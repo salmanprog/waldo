@@ -4,9 +4,7 @@ import { prisma } from "@/lib/prisma";
 import AdminGalleryItemsController from "@/controllers/AdminGalleryItemsController";
 import type { ExtendedGalleryItems } from "@/resources/AdminGalleryItemsResource";
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
 import { verifyToken } from "@/utils/jwt";
-import path from "path";
 interface DecodedToken {
   id: string;
   [key: string]: unknown;
@@ -32,24 +30,30 @@ export async function POST(request: Request) {
         );
       }
 
-      // Use gallery name (title or slug) for upload subdirectory, sanitized for filesystem
+      // Use gallery name (title or slug) for upload subfolder key (same as before, on S3)
       const galleryNameRaw = (gallery.title || gallery.slug || "gallery").trim();
       const uploadSubdir = galleryNameRaw
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || "gallery";
-      
-      const relativePath = gallery.galleryPath.replace(/^\/uploads\//, "");
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        relativePath,
-        uploadSubdir
-      );
 
-      await fs.mkdir(uploadDir, { recursive: true });
-      const imageUrlPrefix = `${gallery.galleryPath}/${uploadSubdir}`;
+      const pathForS3Key = gallery.galleryPath!.replace(/^\//, "");
+      const { isS3GalleryUploadConfigured, putGalleryImageToS3, galleryPublicUrlForKey, getGalleryS3PublicBaseUrl } =
+        await import("@/lib/s3GalleryUpload");
+      if (!isS3GalleryUploadConfigured()) {
+        return NextResponse.json(
+          { code: 422, message: "S3 is not configured for gallery uploads." },
+          { status: 422 }
+        );
+      }
+      try {
+        getGalleryS3PublicBaseUrl();
+      } catch {
+        return NextResponse.json(
+          { code: 422, message: "Set AWS_S3_BUCKET_URL for public image URLs." },
+          { status: 422 }
+        );
+      }
 
       for (const [key, value] of formData.entries()) {
         if (typeof value === "string") {
@@ -60,11 +64,11 @@ export async function POST(request: Request) {
 
           const buffer = Buffer.from(await file.arrayBuffer());
           const fileName = `${Date.now()}-${file.name || "upload"}`;
-          const filePath = path.join(uploadDir, fileName);
-
-          await fs.writeFile(filePath, buffer);
-          (data as Record<string, any>).imageUrl =
-            `${imageUrlPrefix}/${fileName}`;
+          const contentType =
+            typeof file.type === "string" && file.type ? file.type : "application/octet-stream";
+          const s3Key = `${pathForS3Key}/${uploadSubdir}/${fileName}`;
+          await putGalleryImageToS3({ key: s3Key, body: buffer, contentType });
+          (data as Record<string, any>).imageUrl = galleryPublicUrlForKey(s3Key);
         }
       }
 

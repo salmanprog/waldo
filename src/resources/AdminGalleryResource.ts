@@ -1,4 +1,5 @@
 import BaseResource from "@/resources/BaseResource";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 
 // Extend Blog type to include relations
 export type ExtendedGallery = {
@@ -57,9 +58,7 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
       is_face_recognition: gallery.is_face_recognition,
       face_recognition_heading: gallery.face_recognition_heading ?? null,
       is_coff_book: gallery.is_coff_book ?? false,
-      imageUrl: gallery.imageUrl
-        ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${gallery.imageUrl}`
-        : null,
+      imageUrl: resolveMediaUrl(gallery.imageUrl),
 
       galleryPath: gallery.galleryPath,
       numberOfDownlaod: gallery.numberOfDownlaod ?? null,
@@ -87,7 +86,7 @@ export default class AdminGalleryResource extends BaseResource<ExtendedGallery> 
             id: item.id,
             title: item.title,
             description: item.description,
-            imageUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}${item.imageUrl}`,
+            imageUrl: resolveMediaUrl(item.imageUrl),
             sortOrder: item.sortOrder,
           }))
         : [],

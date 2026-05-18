@@ -7,6 +7,22 @@ import useApi from "@/utils/useApi";
 
 const MAX_IMAGES = 1000;
 const PAGE_SIZE = 20;
+const UPLOAD_BATCH_SIZE = 25;
+
+type UploadRowStatus = "pending" | "uploading" | "ok" | "error";
+
+interface UploadRow {
+  index: number;
+  name: string;
+  status: UploadRowStatus;
+  error?: string;
+}
+
+interface BatchUploadApiResult {
+  originalName: string;
+  ok: boolean;
+  error?: string;
+}
 
 async function sendGalleryUploadEmailToPurchasers(galleryIdStr: string) {
   const token =
@@ -45,6 +61,7 @@ export default function AddGalleryImages() {
   const [images, setImages] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatuses, setUploadStatuses] = useState<UploadRow[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -59,13 +76,6 @@ export default function AddGalleryImages() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ================= APIs =================
-
-  // upload API
-  const { sendData } = useApi({
-    url: "/api/admin/gallery-items/multiple",
-    type: "manual",
-    requiresAuth: true,
-  });
 
   // list API (same pattern)
   const {
@@ -125,6 +135,7 @@ export default function AddGalleryImages() {
     }
 
     setErrorMsg("");
+    setUploadStatuses([]);
     setImages((prev) => [...prev, ...selected]);
     e.target.value = "";
   };
@@ -139,6 +150,7 @@ export default function AddGalleryImages() {
       return;
     }
     setErrorMsg("");
+    setUploadStatuses([]);
     setImages((prev) => [...prev, ...files]);
   };
 
@@ -154,7 +166,7 @@ export default function AddGalleryImages() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ================= UPLOAD =================
+  // ================= UPLOAD (S3 + local via API, batched for large batches) =================
   const uploadImages = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -162,31 +174,146 @@ export default function AddGalleryImages() {
     if (!galleryId) return setErrorMsg("Gallery ID missing");
     if (!images.length) return setErrorMsg("Select at least one image");
 
-    const formData = new FormData();
-    formData.append("galleryId", galleryId);
+    const list = [...images];
+    const total = list.length;
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+        : "";
 
-    images.forEach((file) => {
-      formData.append("images[]", file);
-    });
+    setUploadStatuses(
+      list.map((file, index) => ({
+        index,
+        name: file.name?.trim() || `Image ${index + 1}`,
+        status: "pending",
+      }))
+    );
 
     try {
       setUploading(true);
       setProgress(0);
 
-      const res = await sendData(formData, (percent) => {
-        setProgress(percent);
-      });
+      let anySuccess = false;
+      let anyFailed = false;
 
-      if (res?.code === 200) {
-        setImages([]);
-        setVisibleCount(PAGE_SIZE);
-        fetchGalleryItems(); // refresh grid
-        void sendGalleryUploadEmailToPurchasers(galleryId);
-      } else {
-        setErrorMsg(res?.message || "Upload failed");
+      for (let offset = 0; offset < total; offset += UPLOAD_BATCH_SIZE) {
+        const slice = list.slice(offset, offset + UPLOAD_BATCH_SIZE);
+
+        setUploadStatuses((prev) =>
+          prev.map((row) =>
+            row.index >= offset && row.index < offset + slice.length
+              ? { ...row, status: "uploading", error: undefined }
+              : row
+          )
+        );
+
+        const formData = new FormData();
+        formData.append("galleryId", galleryId);
+        slice.forEach((file) => formData.append("images[]", file));
+
+        const res = await fetch("/api/admin/gallery-items/multiple", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+
+        const json = (await res.json()) as {
+          code?: number;
+          message?: string;
+          data?: {
+            succeeded?: number;
+            failed?: number;
+            results?: BatchUploadApiResult[];
+          };
+        };
+
+        if (res.status === 401 || res.status === 403) {
+          setErrorMsg("Session expired. Redirecting to login…");
+          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
+          setUploadStatuses((prev) =>
+            prev.map((row) =>
+              row.index >= offset && row.index < offset + slice.length
+                ? {
+                    ...row,
+                    status: "error",
+                    error: json?.message || "Unauthorized",
+                  }
+                : row
+            )
+          );
+          setTimeout(() => router.push("/admin/login"), 1500);
+          anyFailed = true;
+          break;
+        }
+
+        if (!res.ok || json?.code !== 200) {
+          const msg = json?.message || "Upload failed";
+          setUploadStatuses((prev) =>
+            prev.map((row) =>
+              row.index >= offset && row.index < offset + slice.length
+                ? { ...row, status: "error", error: msg }
+                : row
+            )
+          );
+          anyFailed = true;
+          setProgress(Math.round(Math.min(100, ((offset + slice.length) / total) * 100)));
+          continue;
+        }
+
+        const batchResults = json.data?.results;
+        if (Array.isArray(batchResults) && batchResults.length === slice.length) {
+          if (batchResults.some((r) => r.ok)) anySuccess = true;
+          if (batchResults.some((r) => !r.ok)) anyFailed = true;
+          setUploadStatuses((prev) =>
+            prev.map((row) => {
+              if (row.index < offset || row.index >= offset + slice.length) return row;
+              const r = batchResults[row.index - offset];
+              if (r.ok) {
+                return { ...row, status: "ok", error: undefined };
+              }
+              return { ...row, status: "error", error: r.error || "Failed" };
+            })
+          );
+        } else {
+          const failed = Number(json.data?.failed ?? 0);
+          const ok = failed === 0;
+          if (ok) anySuccess = true;
+          else anyFailed = true;
+          setUploadStatuses((prev) =>
+            prev.map((row) =>
+              row.index >= offset && row.index < offset + slice.length
+                ? {
+                    ...row,
+                    status: ok ? "ok" : "error",
+                    error: ok ? undefined : json?.message || "Unknown error",
+                  }
+                : row
+            )
+          );
+        }
+
+        setProgress(Math.round(Math.min(100, ((offset + slice.length) / total) * 100)));
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Upload failed");
+
+      if (anySuccess) {
+        setVisibleCount(PAGE_SIZE);
+        fetchGalleryItems();
+        void sendGalleryUploadEmailToPurchasers(galleryId);
+        setImages([]);
+      }
+
+      if (anyFailed) {
+        setErrorMsg(
+          anySuccess
+            ? "Some images failed to upload. See the list below for details."
+            : "Upload failed. See the list below for details."
+        );
+      } else if (anySuccess) {
+        setUploadStatuses([]);
+      }
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -253,12 +380,15 @@ export default function AddGalleryImages() {
   };
 
   const imagePathFromUrl = (imageUrl: string): string => {
+    if (!imageUrl) return "";
+    const t = imageUrl.trim();
+    if (/^https?:\/\//i.test(t)) return t;
     try {
-      if (imageUrl.startsWith("/")) return imageUrl;
-      const u = new URL(imageUrl);
+      if (t.startsWith("/")) return t;
+      const u = new URL(t);
       return u.pathname;
     } catch {
-      return imageUrl;
+      return t;
     }
   };
 
@@ -347,33 +477,113 @@ export default function AddGalleryImages() {
         {/* PREVIEW GRID */}
         {images.length > 0 && (
           <div className="grid grid-cols-5 gap-3">
-            {images.map((file, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={URL.createObjectURL(file)}
-                  className="w-full h-20 object-cover rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePreviewImage(index)}
-                  className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+            {images.map((file, index) => {
+              const row =
+                uploadStatuses.length === images.length
+                  ? uploadStatuses[index]
+                  : undefined;
+              return (
+                <div key={index} className="relative">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    className="w-full h-20 object-cover rounded"
+                  />
+                  {row && (
+                    <span
+                      className={`absolute bottom-1 left-1 right-1 text-center text-[10px] px-0.5 py-0.5 rounded truncate ${
+                        row.status === "ok"
+                          ? "bg-green-600 text-white"
+                          : row.status === "error"
+                            ? "bg-red-600 text-white"
+                            : row.status === "uploading"
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-600 text-white"
+                      }`}
+                    >
+                      {row.status === "ok"
+                        ? "OK"
+                        : row.status === "error"
+                          ? "Fail"
+                          : row.status === "uploading"
+                            ? "…"
+                            : "Wait"}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removePreviewImage(index)}
+                    disabled={uploading}
+                    className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded disabled:opacity-40"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {uploading && (
+        {(uploading || uploadStatuses.length > 0) && (
           <>
             <div className="w-full bg-gray-200 h-3 rounded overflow-hidden">
               <div
-                className="bg-green-600 h-full"
-                style={{ width: `${progress}%` }}
+                className="bg-green-600 h-full transition-[width] duration-300"
+                style={{ width: `${uploading ? progress : 100}%` }}
               />
             </div>
-            <p className="text-sm">{progress}% uploading…</p>
+            <p className="text-sm">
+              {uploading ? `${progress}% uploading…` : "Upload finished"}
+            </p>
+
+            {uploadStatuses.length > 0 && (
+              <div className="rounded border border-gray-200 bg-white max-h-56 overflow-y-auto text-xs shadow-sm">
+                <div className="sticky top-0 bg-gray-100 px-2 py-1 font-semibold text-gray-700 border-b">
+                  File status · {uploadStatuses.filter((u) => u.status === "ok").length} succeeded ·{" "}
+                  {uploadStatuses.filter((u) => u.status === "error").length} failed
+                </div>
+                <ul className="divide-y divide-gray-100">
+                  {uploadStatuses.map((row) => (
+                    <li
+                      key={row.index}
+                      className="flex items-start justify-between gap-2 px-2 py-1.5"
+                    >
+                      <span className="truncate text-gray-800" title={row.name}>
+                        {row.name}
+                      </span>
+                      <span
+                        className={`shrink-0 font-medium ${
+                          row.status === "ok"
+                            ? "text-green-700"
+                            : row.status === "error"
+                              ? "text-red-600"
+                              : row.status === "uploading"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        }`}
+                      >
+                        {row.status === "ok"
+                          ? "Success"
+                          : row.status === "error"
+                            ? row.error || "Failed"
+                            : row.status === "uploading"
+                              ? "Uploading…"
+                              : "Pending"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {uploadStatuses.length > 0 && !uploading && (
+              <button
+                type="button"
+                className="text-sm text-blue-600 hover:underline"
+                onClick={() => setUploadStatuses([])}
+              >
+                Clear status report
+              </button>
+            )}
           </>
         )}
 
@@ -397,7 +607,7 @@ export default function AddGalleryImages() {
         <div className="mb-8 p-4 border rounded-lg bg-gray-50">
           <h3 className="text-lg font-semibold mb-2">Face index</h3>
           <p className="text-sm text-gray-600 mb-3">
-            Index faces in this gallery&apos;s directory so face search can find them. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index all images in this gallery.
+            Indexes faces from your gallery images using their real URLs (e.g. S3). Face search matches the same URLs stored on each image. By default only new images are indexed (fast). Use &quot;Full rebuild&quot; to re-index every image in this gallery.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm">

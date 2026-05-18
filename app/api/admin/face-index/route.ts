@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { spawn } from "child_process";
 import path from "path";
 import { promises as fs } from "fs";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 
 async function getAuthUser(req: Request): Promise<{ id: number; userGroupId?: number } | null> {
   try {
@@ -66,12 +67,44 @@ export async function POST(request: Request) {
     galleryFolder = gallery.galleryPath.replace(/^\/uploads\/gallery\/?/, "").split("/")[0] || null;
   }
 
-  const scriptPath = path.join(process.cwd(), "scripts", "build-face-index.js");
+  let scriptPath = path.join(process.cwd(), "scripts", "build-face-index.js");
   const args = galleryFolder ? [`--gallery=${galleryFolder}`] : [];
   if (platoonNumber != null) {
     args.push(`--platoon=${platoonNumber}`);
   }
-  const env = { ...process.env, ...(fullRebuild ? { FACE_INDEX_FULL: "1" } : {}) };
+  let extraEnv: Record<string, string> = {};
+  if (galleryId && galleryFolder) {
+    const where: { galleryId: number; deletedAt: null; platoonNumber?: number } = {
+      galleryId,
+      deletedAt: null,
+    };
+    if (platoonNumber != null && platoonNumber !== "") {
+      where.platoonNumber = Number(platoonNumber);
+    }
+    const items = await prisma.galleryItem.findMany({
+      where,
+      select: { imageUrl: true },
+    });
+    // Resolve each row to a fetchable URL (S3 HTTPS, or legacy /uploads/gallery/... → S3 via resolveMediaUrl)
+    const resolved = items
+      .map((i) => resolveMediaUrl(i.imageUrl))
+      .filter((u): u is string => Boolean(u && /^https?:\/\//i.test(u)));
+    const urls = [...new Set(resolved)];
+    if (urls.length > 0) {
+      const tmpDir = path.join(process.cwd(), ".tmp");
+      await fs.mkdir(tmpDir, { recursive: true });
+      const tmpFile = path.join(tmpDir, `face-index-urls-${galleryId}-${Date.now()}.txt`);
+      await fs.writeFile(tmpFile, urls.join("\n"), "utf-8");
+      scriptPath = path.join(process.cwd(), "scripts", "build-face-index-urls.js");
+      extraEnv = { FACE_INDEX_URLS_FILE: tmpFile };
+    }
+  }
+
+  const env = {
+    ...process.env,
+    ...extraEnv,
+    ...(fullRebuild ? { FACE_INDEX_FULL: "1" } : {}),
+  };
 
   const stream = new ReadableStream({
     start(controller) {

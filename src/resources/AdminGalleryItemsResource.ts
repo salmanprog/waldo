@@ -1,4 +1,5 @@
 import BaseResource from "@/resources/BaseResource";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 
 // Extend Blog type to include relations
 export type ExtendedGalleryItems = {
@@ -27,9 +28,7 @@ export default class AdminGalleryItemsResource extends BaseResource<ExtendedGall
       id: gallery.id,
       slug: gallery.slug,
       platoonNumber: gallery.platoonNumber,
-      imageUrl: gallery.imageUrl
-        ? `${process.env.NEXT_PUBLIC_APP_URL || ""}${gallery.imageUrl}`
-        : null,
+      imageUrl: resolveMediaUrl(gallery.imageUrl),
       gallery: gallery.gallery
         ? {
             id: gallery.gallery.id,
